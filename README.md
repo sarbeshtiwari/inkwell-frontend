@@ -47,7 +47,8 @@ src/
   main.jsx                 Entry: loads saved preferences, picks Auth or App, reports browser errors
   App.jsx                  Page registry (lazy-loaded), titles, page transitions
   layout/                  Shell (sidebar, top bar, ⌘K), Notifications, SendView (live campaign progress)
-  pages/                   One file per page (see table above)
+  pages/                   One file per page (see table above); big pages keep their parts in a folder
+                           (ai-jobs/, website/, github/, portfolio/, contacts/: drawers, panels, editors)
   lib/
     api.js                 fetch wrapper: CSRF header, errors → ApiError, upload with progress
     store.jsx              Shared state: account, contacts, templates, profile, counts, WhatsApp link

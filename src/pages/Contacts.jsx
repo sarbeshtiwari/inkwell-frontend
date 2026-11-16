@@ -1,22 +1,28 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useMemo, useState } from "react";
-import { api, upload } from "../lib/api";
-import { emit } from "../lib/bus";
+import { api } from "../lib/api";
 import { emailOk, fmtDate, phoneOk, today } from "../lib/format";
 import { go } from "../lib/router";
 import { useApp } from "../lib/store";
-import { Badge, Button, Check, Empty, Field, FormError, Icon, Spinner, Switch, applyError, fail, modal, toast, useDebounced, Pager, usePager } from "../ui/kit";
-import { Dropzone, EmailBadge, SendBadge } from "../ui/shared";
+import { Badge, Button, Empty, Icon, Spinner, fail, modal, toast, useDebounced, Pager, usePager } from "../ui/kit";
+import { EmailBadge, SendBadge } from "../ui/shared";
 import { extraCols } from "./Campaign";
+import { AddPanel } from "./contacts/AddPanel";
+import { ImportPanel } from "./contacts/ImportPanel";
+import { SentPanel } from "./contacts/SentPanel";
 
 const CORE = ["name", "company", "phone", "email"];
+
 const STATUS = ["wa_status", "wa_last", "email_status", "email_last", "email_opened", "replied_at", "reply_intent", "reply_count", "added_at"];
+
 const PH = { name: "Add name", company: "Add company", phone: "Add phone", email: "Add email" };
 
 // Whole days since the contact was added (0 = today), or null for contacts saved before dates were recorded.
 // What kind of inbox an address reaches: hiring (careers@, jobs@, hr@…) or a general one (info@, contact@…).
 const HIRING = /^(careers?|jobs?|hiring|recruit\w*|talent\w*|hr|people|join\w*|apply|applications?|resumes?|cv)([._-]|$)/i;
+
 const GENERAL = /^(hello|hi|info|contact|team|office|mail|enquir\w*|inquir\w*|general|support|sales|admin)([._-]|$)/i;
+
 function addressKind(r) {
   if (!r.email) return "none";
   if (r.email_type === "careers") return "hiring";
@@ -217,135 +223,6 @@ export default function Contacts() {
           <a className="btn btn-sm btn-ghost" href="/api/recipients/export"><Icon name="download" />Export</a>
         </div>
       </div>
-    </div>
-  );
-}
-
-function AddPanel({ onClose }) {
-  const app = useApp();
-  const empty = { name: "", company: "", phone: "", email: "" };
-  const [v, setV] = useState(empty);
-  const [errors, setErrors] = useState({});
-  const [busy, setBusy] = useState(false);
-  const submit = async e => {
-    e.preventDefault(); setErrors({});
-    const d = Object.fromEntries(Object.entries(v).map(([k, x]) => [k, x.trim()]));
-    if (!d.phone && !d.email) return setErrors({ phone: "Add a phone number or an email address." });
-    if (!phoneOk(d.phone)) return setErrors({ phone: "Enter a valid phone number: 8–15 digits, optionally starting with +." });
-    if (!emailOk(d.email)) return setErrors({ email: "Enter a valid email address, like name@example.com." });
-    setBusy(true);
-    try { const row = await api("/api/recipients", { json: d }); app.setData(x => ({ ...x, recipients: [...x.recipients, row] })); setV(empty); toast(`${row.name || row.phone || row.email} added`); }
-    catch (err) { applyError(err, setErrors); }
-    setBusy(false);
-  };
-  const set = k => e => { setV(x => ({ ...x, [k]: e.target.value })); setErrors(x => ({ ...x, [k]: "" })); };
-  return (
-    <form className="card card-pad panel" onSubmit={submit} noValidate>
-      <h3 className="sec-h">New contact</h3>
-      <div className="row-4">
-        <Field label="Name" error={errors.name}><input className="input" value={v.name} onChange={set("name")} maxLength={120} autoFocus /></Field>
-        <Field label="Company" error={errors.company}><input className="input" value={v.company} onChange={set("company")} maxLength={120} /></Field>
-        <Field label="Phone" error={errors.phone}><input className="input" value={v.phone} onChange={set("phone")} inputMode="tel" placeholder="+91 98765 43210" /></Field>
-        <Field label="Email" error={errors.email}><input className="input" type="email" value={v.email} onChange={set("email")} placeholder="name@company.com" /></Field>
-      </div>
-      <div className="form-actions"><span className="help">Add a phone number, an email address, or both.</span><span className="grow" /><Button onClick={onClose}>Cancel</Button><Button type="submit" variant="primary" busy={busy} busyLabel="Saving…">Save contact</Button></div>
-    </form>
-  );
-}
-
-function ImportPanel({ onClose }) {
-  const app = useApp();
-  const [replace, setReplace] = useState(false);
-  const [busy, setBusy] = useState("");
-  const [err, setErr] = useState("");
-  const onFiles = async files => {
-    const file = files[0]; setErr("");
-    if (!/\.(xlsx|xlsm|csv)$/i.test(file.name)) return setErr("Choose an Excel (.xlsx) or CSV file.");
-    if (file.size > 5 * 1048576) return setErr("That file is larger than 5 MB. Split it into smaller files.");
-    if (replace && !await modal({ title: "Replace all contacts?", text: "Your current list, including who has already been contacted, will be replaced by this file.", confirm: "Replace", danger: true })) return;
-    const fd = new FormData(); fd.append("file", file); fd.append("replace", replace ? "1" : "0");
-    setBusy(file.name);
-    try {
-      const d = await upload("/api/recipients/import", fd);
-      const skipped = [d.duplicates && `${d.duplicates} duplicate${d.duplicates === 1 ? "" : "s"}`, d.invalid && `${d.invalid} without a valid phone or email`].filter(Boolean).join(", ");
-      toast(`Added ${d.added} contact${d.added === 1 ? "" : "s"}` + (skipped ? ` · skipped ${skipped}` : ""));
-      await app.reload(); onClose();
-    } catch (e) { setErr(e.message); }
-    setBusy("");
-  };
-  return (
-    <div className="card card-pad panel">
-      <Dropzone onFiles={onFiles} accept=".xlsx,.xlsm,.csv" busy={!!busy}>
-        <div className="dz-ic"><Icon name="sheet" /></div>
-        <b>{busy ? <><Spinner /> Importing {busy}…</> : "Drop your Excel or CSV file here, or click to choose"}</b>
-        <span className="help">Name, company, phone and email columns are found automatically. Other columns become fields you can use in your message. Max 5 MB.</span>
-      </Dropzone>
-      <FormError>{err}</FormError>
-      <div className="form-actions"><Switch checked={replace} onChange={setReplace}>Replace my whole list</Switch><span className="grow" />
-        <a className="btn btn-sm btn-ghost" href="/api/recipients/sample"><Icon name="download" />Sample sheet</a><Button size="sm" onClick={onClose}>Done</Button></div>
-    </div>
-  );
-}
-
-function SentPanel({ onClose }) {
-  const app = useApp();
-  const [days, setDays] = useState("0");
-  const [items, setItems] = useState(null);
-  const [picked, setPicked] = useState(new Set());
-  const [filter, setFilter] = useState("");
-  const [mark, setMark] = useState(false);
-  const [err, setErr] = useState(app.data.profile.has_password ? "" : "Set up email on the Profile page first. Reachout uses the same app password to read your Sent folder.");
-  const [busy, setBusy] = useState("");
-  const vis = (items || []).filter(x => !filter || [x.email, x.name, x.company, x.last_subject].some(v => (v || "").toLowerCase().includes(filter.toLowerCase())));
-  const pickable = vis.filter(x => !x.imported);
-  const scan = async () => {
-    setBusy("scan"); setErr("");
-    try { const d = await api("/api/sentmail/scan", { json: { days: +days } }); setItems(d.items); setPicked(new Set(d.items.filter(x => !x.imported).map(x => x.email))); if (!d.items.length) toast("No sent emails found in that period."); }
-    catch (e) { setErr(e.message); }
-    setBusy("");
-  };
-  const doImport = async () => {
-    setBusy("import");
-    try {
-      const sel = items.filter(x => picked.has(x.email)).map(({ email, name, company, sends }) => ({ email, name, company, sends }));
-      const d = await api("/api/sentmail/import", { json: { items: sel, mark_contacted: mark } });
-      toast(mark ? `Imported ${d.added} new, updated ${d.updated}, added ${d.history} past emails to Activity` : `Imported ${d.added} new contact${d.added === 1 ? "" : "s"} (${d.updated} already existed).`);
-      setItems(list => list.map(x => picked.has(x.email) ? { ...x, imported: true, contact: true } : x)); setPicked(new Set());
-      await app.reload(); emit("history-changed");
-    } catch (e) { setErr(e.message); }
-    setBusy("");
-  };
-  return (
-    <div className="card card-pad panel">
-      <h3 className="sec-h" style={{ marginBottom: 4 }}>Import people you've already emailed</h3>
-      <p className="help">Reachout looks at your mailbox's <b>Sent</b> folder and reads only who you wrote to, when, and the subject line. Personal addresses (gmail.com, yahoo.com…) are skipped.</p>
-      <div className="form-actions" style={{ marginTop: 12 }}>
-        <select className="select auto" value={days} onChange={e => setDays(e.target.value)} aria-label="Look back"><option value="0">All time</option><option value="30">Last 30 days</option><option value="90">Last 3 months</option><option value="180">Last 6 months</option><option value="365">Last 12 months</option></select>
-        <Button variant="primary" icon="search" busy={busy === "scan"} busyLabel="Scanning…" onClick={scan} disabled={!app.data.profile.has_password}>Scan Sent folder</Button>
-        <span className="grow" /><Button variant="ghost" onClick={onClose}>Close</Button>
-      </div>
-      <FormError>{err}</FormError>
-      {items && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-        <div className="sent-bar">
-          <Check checked={pickable.length > 0 && pickable.every(x => picked.has(x.email))} onChange={on => setPicked(s => { const n = new Set(s); pickable.forEach(x => on ? n.add(x.email) : n.delete(x.email)); return n; })}>{picked.size} selected of {items.filter(x => !x.imported).length}</Check>
-          <span className="grow" /><input className="input" type="search" placeholder="Filter…" value={filter} onChange={e => setFilter(e.target.value)} style={{ maxWidth: 220 }} />
-        </div>
-        <div className="table-wrap sent-wrap"><table className="table">
-          <thead><tr><th className="cb" /><th>Person</th><th>Company</th><th>Emails</th><th>Last sent</th><th>Last subject</th><th /></tr></thead>
-          <tbody>{vis.map(x => (
-            <tr key={x.email} className={picked.has(x.email) ? "sel" : ""}>
-              <td className="cb"><input type="checkbox" checked={picked.has(x.email)} disabled={x.imported} onChange={e => setPicked(s => { const n = new Set(s); e.target.checked ? n.add(x.email) : n.delete(x.email); return n; })} /></td>
-              <td><b>{x.name || x.email.split("@")[0]}</b><div className="help">{x.email}</div></td>
-              <td className="tight"><input className="cell" defaultValue={x.company} placeholder="Add company" onChange={e => { x.company = e.target.value.trim(); }} /></td>
-              <td className="num">{x.count}</td><td className="nowrap">{fmtDate(x.last)}</td>
-              <td><div className="clip help" title={x.last_subject}>{x.last_subject || "(no subject)"}</div></td>
-              <td>{x.imported ? <Badge tone="ok">Imported</Badge> : x.contact ? <Badge tone="brand">In contacts</Badge> : null}</td>
-            </tr>))}
-            {!vis.length && <tr><td colSpan={7}><Empty icon="mail" title="Nobody to show">{items.length ? "Nobody matches your filter." : "No new work addresses in your Sent folder for this period."}</Empty></td></tr>}
-          </tbody></table></div>
-        <div className="form-actions"><Switch checked={mark} onChange={setMark}>Mark as already contacted <span className="help">(campaigns will skip them)</span></Switch><span className="grow" />
-          <Button variant="primary" icon="download" disabled={!picked.size} busy={busy === "import"} busyLabel="Importing…" onClick={doImport}>Import selected</Button></div>
-      </motion.div>}
     </div>
   );
 }

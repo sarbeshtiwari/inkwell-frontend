@@ -3,16 +3,32 @@ import { useEffect, useRef, useState } from "react";
 import { api } from "../lib/api";
 import { go } from "../lib/router";
 import { useApp } from "../lib/store";
-import { Alert, Badge, Button, Check, Drawer, DrawerHead, Empty, Field, Icon, Seg, Switch, fail, modal, toast } from "../ui/kit";
+import { Alert, Badge, Button, Check, Empty, Field, Icon, Switch, fail, modal, toast } from "../ui/kit";
+import { AnswersDrawer } from "./ai-jobs/AnswersDrawer";
+import { ApplyDrawer } from "./ai-jobs/ApplyDrawer";
+import { ExtensionDrawer } from "./ai-jobs/ExtensionDrawer";
+import { KeysDrawer } from "./ai-jobs/KeysDrawer";
+import { FollowupsDrawer } from "./ai-jobs/FollowupsDrawer";
+import { InsightsDrawer } from "./ai-jobs/InsightsDrawer";
+import { KitDrawer } from "./ai-jobs/KitDrawer";
+import { LiveView } from "./ai-jobs/LiveView";
+import { ReportDrawer, TIER_LABEL, scoreTone } from "./ai-jobs/ReportDrawer";
+import { RulesDrawer } from "./ai-jobs/RulesDrawer";
+import { CompaniesDrawer } from "./ai-jobs/CompaniesDrawer";
+import { ModelDrawer } from "./ai-jobs/ModelDrawer";
+import { UpdateDrawer } from "./ai-jobs/UpdateDrawer";
+import { FeedbackButtons, LearningDrawer } from "./ai-jobs/LearningDrawer";
+import { SOURCES, tone } from "./ai-jobs/shared";
 
-const SOURCES = [
-  ["career_sites", "Company career sites", "Greenhouse, Lever & Ashby job boards. No key needed.", null],
-  ["tavily", "Tavily web search", "Search built for AI agents. Free: 1,000 searches a month, no card needed.", "https://app.tavily.com"],
-  ["brave", "Brave web search", "Independent web search. $5 free credit a month (about 1,000 searches); needs a card.", "https://api-dashboard.search.brave.com"],
-];
 const STEPS = ["Reading your resume", "Searching", "Ranking matches", "Done"];
+
+const TIER = { "High Confidence": "ok", "Proceed with Caution": "warn", Suspicious: "bad", Closed: "bad" };
+const KEYLESS = ["career_sites", "remote_boards"];
+
+const MODE_LABEL = { board: "Auto-apply ready", site: "Auto-apply on company site", account: "Watch mode: needs your sign-in" };
+const MODE_HINT = { site: "Reachout finds the application form on the company's own site and fills it; it hands back anything only you can do.",
+  account: "This site makes you sign in first. With Watch mode on, you sign in in the window and Reachout fills the rest." };
 const APPLY = { applied: ["Applied", "ok"], needs_you: ["Needs you", "warn"], closed: ["Closed", ""], ready: ["Ready", "brand"], with_you: ["Open on your screen", "brand"], blocked: ["Apply in your browser", "warn"] };
-const tone = s => (s >= 80 ? "great" : s >= 65 ? "good" : s >= 50 ? "fair" : "low");
 
 export default function AIJobs() {
   const app = useApp();
@@ -31,6 +47,17 @@ export default function AIJobs() {
   const [extOpen, setExtOpen] = useState(false);
   const [answersOpen, setAnswersOpen] = useState(null); // null = closed; {} = open; {question, company} = open with a new answer
   const [answers, setAnswers] = useState([]);
+  const [reportFor, setReportFor] = useState(null);
+  const [rulesOpen, setRulesOpen] = useState(false);
+  const [fuOpen, setFuOpen] = useState(false);
+  const [insOpen, setInsOpen] = useState(false);
+  const [modelOpen, setModelOpen] = useState(false);
+  const [coOpen, setCoOpen] = useState(false);
+  const [updOpen, setUpdOpen] = useState(false);
+  const [learnOpen, setLearnOpen] = useState(false);
+  const [canUpdate, setCanUpdate] = useState(false);
+  useEffect(() => { api("/api/update/progress").then(r => setCanUpdate(r.enabled)).catch(() => {}); }, []);
+  const [hideSkipped, setHideSkipped] = useState(true);
   const loadAnswers = () => api("/api/ai-jobs/answers").then(r => setAnswers(r.answers)).catch(() => {});
   useEffect(() => { loadAnswers(); }, []);
   const toReview = answers.filter(a => a.status === "review").length;
@@ -43,7 +70,7 @@ export default function AIJobs() {
       setF(x => ({ ...x, resume: x.resume || r.resumes.find(n => !/cover/i.test(n)) || r.resumes[0] || "",
                    ...(r.want && !x.role ? { role: r.want.role, years: String(r.want.years ?? ""), company: r.want.company || "", location: r.want.location || "" } : {}) }));
       clearTimeout(timer.current);
-      if (r.state === "running" || r.applying?.state === "running" || r.handover) timer.current = setTimeout(load, 1800);
+      if (r.state === "running" || r.applying?.state === "running" || r.handover || r.evaluating?.state === "running") timer.current = setTimeout(load, 1800);
     } catch (e) { fail(e); }
   };
   useEffect(() => { load(); return () => clearTimeout(timer.current); }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -65,23 +92,42 @@ export default function AIJobs() {
     setBusy("");
   };
   const toggleSource = id => {
-    if (id !== "career_sites" && !d?.keys?.[id] && !sources.includes(id)) { setKeysOpen(true); return; }
+    if (!KEYLESS.includes(id) && !d?.keys?.[id] && !sources.includes(id)) { setKeysOpen(true); return; }
     setSources(s => s.includes(id) ? (s.length > 1 ? s.filter(x => x !== id) : s) : [...s, id]);
   };
 
-  const results = (d?.results || []).filter(r => r.score >= minScore);
+  const skipped = (d?.results || []).filter(r => ["skip", "discarded"].includes(r.status)).length;
+  const results = (d?.results || []).filter(r => r.score >= minScore && !(hideSkipped && ["skip", "discarded"].includes(r.status)));
   const canPick = r => r.can_apply && r.apply?.state !== "applied" && r.apply?.state !== "closed";
   const toggle = id => setPicked(p => { const n = new Set(p); n.has(id) ? n.delete(id) : n.add(id); return n; });
-  const applyNow = async () => {
+  const evaluateMany = async () => {
+    const ids = picked.size ? [...picked] : results.filter(r => !r.report).slice(0, 10).map(r => r.id);
+    if (!ids.length) { toast("Every job shown is already evaluated."); return; }
+    setBusy("evaluate");
+    try { await api("/api/ai-jobs/evaluate", { json: { ids } }); toast(`Evaluating ${ids.length} job${ids.length === 1 ? "" : "s"}…`); load(); }
+    catch (x) { fail(x); }
+    setBusy("");
+  };
+  const setStatus = async (r, status) => {
+    try { await api(`/api/ai-jobs/status/${encodeURIComponent(r.id)}`, { method: "PUT", json: { status } }); load(); } catch (x) { fail(x); }
+  };
+  const applyNow = async (anyway = false) => {
     if (!d.consent) { setApplyOpen(true); return; }
     const ids = [...picked];
-    if (!await modal({ title: `Apply to ${ids.length} job${ids.length === 1 ? "" : "s"}?`, confirm: "Apply now",
+    if (!anyway && !await modal({ title: `Apply to ${ids.length} job${ids.length === 1 ? "" : "s"}?`, confirm: "Apply now",
       text: watchWindow && d.can_hand_over
         ? "A browser window opens and each job gets its own tab: Reachout AI fills the form and submits it. Where you're needed (signing in, creating an account, a question only you can answer, a CAPTCHA) it pauses with a bar at the bottom of the page; do that part, then press Continue."
         : "Reachout AI fills each public application form with your resume and details and submits it. Forms with questions only you can answer, or a CAPTCHA, are handed back to you. You can watch it live on this page." })) return;
     setBusy("apply");
-    try { await api("/api/ai-jobs/apply", { json: { ids, watch: watchWindow } }); setPicked(new Set()); toast("Applying… watch it live below."); load(); }
-    catch (x) { x.field === "consent" || x.field === "phone" ? (x.field === "phone" ? (toast(x.message, true), go("profile")) : setApplyOpen(true)) : fail(x); }
+    try { await api("/api/ai-jobs/apply", { json: { ids, watch: watchWindow, anyway } }); setPicked(new Set()); toast("Applying… watch it live below."); load(); }
+    catch (x) {
+      if (x.field === "rules") {
+        setBusy("");
+        if (await modal({ title: "Some picks break your rules", text: x.message, confirm: "Apply anyway", danger: true })) applyNow(true);
+        return;
+      }
+      x.field === "consent" || x.field === "phone" ? (x.field === "phone" ? (toast(x.message, true), go("profile")) : setApplyOpen(true)) : fail(x);
+    }
     setBusy("");
   };
 
@@ -98,7 +144,7 @@ export default function AIJobs() {
         <div className="ai-hero-glow" aria-hidden="true" />
         <div className="ai-hero-head">
           <span className="ai-chip"><Icon name="sparkles" />Reachout AI</span>
-          <span className="help">{d?.local_model ? `Matching engine + ${d.model_name} running locally` : "Reachout's own matching engine · runs on our server, no outside AI"}</span>
+          <span className="help">{d?.local_model ? `Matching engine + ${d.model_name}` : "Reachout's own matching engine · no outside AI"}</span>
         </div>
         <h2>What job are you looking for?</h2>
         <div className="ai-form">
@@ -125,10 +171,21 @@ export default function AIJobs() {
           {SOURCES.map(([id, label, hint]) => (
             <button key={id} type="button" className={`ai-source ${sources.includes(id) ? "on" : ""}`} onClick={() => toggleSource(id)} aria-pressed={sources.includes(id)}>
               <span className="ai-tick"><Icon name="check" /></span>
-              <span><b>{label}</b><small>{id !== "career_sites" && !d?.keys?.[id] ? "Add your key to use" : hint}</small></span>
+              <span><b>{label}</b><small>{!KEYLESS.includes(id) && !d?.keys?.[id] ? "Add your key to use" : hint}</small></span>
             </button>
           ))}
           <Button variant="ghost" size="sm" icon="settings" onClick={() => setKeysOpen(true)}>Search keys</Button>
+          <Button variant="ghost" size="sm" icon="flag" onClick={() => setRulesOpen(true)}>My rules</Button>
+          <Button variant="ghost" size="sm" icon="bell" onClick={() => setFuOpen(true)}>
+            Follow-ups{d?.followups_due > 0 && <span className="ai-review-dot">{d.followups_due} due</span>}
+          </Button>
+          <Button variant="ghost" size="sm" icon="trend" onClick={() => setInsOpen(true)}>Insights</Button>
+          <Button variant="ghost" size="sm" icon="star" onClick={() => setLearnOpen(true)}>
+            What it learned{d?.learning?.suggestions > 0 && <span className="ai-review-dot">{d.learning.suggestions} to review</span>}
+          </Button>
+          <Button variant="ghost" size="sm" icon="briefcase" onClick={() => setCoOpen(true)}>My companies</Button>
+          <Button variant="ghost" size="sm" icon="sparkles" onClick={() => setModelOpen(true)}>AI model</Button>
+          {canUpdate && <Button variant="ghost" size="sm" icon="download" onClick={() => setUpdOpen(true)}>Updates</Button>}
           <Button variant="ghost" size="sm" icon="puzzle" onClick={() => setExtOpen(true)}>Browser extension</Button>
           <Button variant="ghost" size="sm" icon="note" onClick={() => { loadAnswers(); setAnswersOpen({}); }}>
             My answers{answers.length ? ` (${answers.length})` : ""}{toReview > 0 && <span className="ai-review-dot">{toReview} to review</span>}
@@ -154,6 +211,10 @@ export default function AIJobs() {
         )}
       </AnimatePresence>
 
+      {d?.evaluating?.state === "running" && (
+        <Alert tone="info" icon="sparkles">Evaluating… {d.evaluating.done} of {d.evaluating.total}{d.evaluating.current ? `: ${d.evaluating.current}` : ""}</Alert>
+      )}
+
       {d?.applying?.state === "running" && (
         <Alert tone="info" icon="sparkles">Applying… {d.applying.done} of {d.applying.total}{d.applying.current ? `: ${d.applying.current}` : ""}</Alert>
       )}
@@ -174,8 +235,13 @@ export default function AIJobs() {
             <select className="select auto" value={minScore} onChange={e => setMinScore(+e.target.value)} aria-label="Minimum match">
               <option value={0}>All matches</option><option value={50}>50%+ match</option><option value={65}>65%+ match</option><option value={80}>80%+ match</option>
             </select>
+            {skipped > 0 && <Check checked={hideSkipped} onChange={setHideSkipped}>Hide {skipped} skipped</Check>}
             {d.can_hand_over && <Check checked={watchWindow} onChange={setWatchWindow}>Watch it in a browser window</Check>}
-            <Button variant="primary" icon="send" busy={busy === "apply"} disabled={!picked.size || d.applying?.state === "running"} onClick={applyNow}>
+            <Button icon="sparkles" busy={busy === "evaluate" || d.evaluating?.state === "running"} busyLabel="Evaluating…" onClick={evaluateMany}
+              title="Score each job out of 5 with a full report: fit, gaps, pay, whether the posting is real, interview prep">
+              {picked.size ? `Evaluate (${picked.size})` : "Evaluate top 10"}
+            </Button>
+            <Button variant="primary" icon="send" busy={busy === "apply"} disabled={!picked.size || d.applying?.state === "running"} onClick={() => applyNow()}>
               Auto-apply{picked.size ? ` (${picked.size})` : ""}
             </Button>
           </div>
@@ -190,24 +256,39 @@ export default function AIJobs() {
                     <div className={`ai-score ${tone(r.score)}`} style={{ "--p": r.score }} aria-label={`${r.score}% match`}><span>{r.score}<small>%</small></span></div>
                     <div className="ai-job-title">
                       <h4>{r.title}</h4>
-                      <span className="help">{r.company}{r.location ? ` · ${r.location}` : ""}{r.posted ? ` · ${r.posted}` : ""}</span>
+                      <span className="help">{r.company}{r.location ? ` · ${r.location}` : ""}{r.posted ? ` · ${r.posted}` : ""}{r.via ? ` · via ${r.via}` : ""}</span>
                     </div>
+                    {r.report && <button type="button" className={`ai-score5 sm ${scoreTone(r.report.score5)}`} onClick={() => setReportFor(r)} title={r.report.verdict}>
+                      <b>{r.report.score5.toFixed(1)}</b><small>/5</small></button>}
                     {canPick(r) && <Check checked={picked.has(r.id)} onChange={() => toggle(r.id)}><span className="sr-only">Select</span></Check>}
                   </div>
                   {r.ai_verdict && <p className="ai-verdict"><Icon name="sparkles" />{r.ai_verdict}</p>}
+                  {(r.report || r.rules?.length > 0 || r.pay) && <div className="ai-badges">
+                    {r.report && <Badge tone={TIER[r.report.tier]}>{TIER_LABEL[r.report.tier]}</Badge>}
+                    {r.rules?.map(x => <Badge key={x.rule} tone="bad" title={x.because}>{x.rule}</Badge>)}
+                    {r.pay && <Badge dot={false}>{r.pay}</Badge>}
+                    {r.remote && r.remote !== "Not stated" && <Badge dot={false}>{r.remote}</Badge>}
+                  </div>}
+                  <FeedbackButtons r={r} given={d.feedback?.[r.id]} onDone={load} />
                   <ul className="ai-why">
                     {r.reasons.map(x => <li key={x} className="ok"><Icon name="check" />{x}</li>)}
                     {r.gaps.slice(0, 3).map(x => <li key={x} className="gap"><Icon name="alert" />{/^[A-Z]/.test(x) && !/ /.test(x) ? `Not on your resume: ${x}` : x}</li>)}
                   </ul>
                   <div className="ai-job-foot">
                     {r.apply ? <Badge tone={APPLY[r.apply.state]?.[1]} title={r.apply.detail}>{APPLY[r.apply.state]?.[0]}</Badge>
-                      : r.can_apply ? <Badge tone="brand" dot={false}>Auto-apply ready</Badge> : <Badge dot={false}>Apply on site</Badge>}
+                      : r.can_apply ? <Badge tone="brand" dot={false} title={MODE_HINT[r.apply_mode]}>{MODE_LABEL[r.apply_mode] || "Auto-apply ready"}</Badge>
+                      : <Badge dot={false}>Apply on site</Badge>}
                     {["needs_you", "with_you", "blocked"].includes(r.apply?.state) && <span className="help ai-detail">{r.apply.detail}</span>}
                     {r.apply?.questions?.length > 0 && r.apply.state !== "applied" && (
                       <details className="ai-questions"><summary>{r.apply.questions.length} question{r.apply.questions.length === 1 ? "" : "s"} for you</summary>
                         <ul>{r.apply.questions.map(q => <li key={q}>{q} <button type="button" className="link ai-save-q"
                           onClick={() => setAnswersOpen({ question: q.replace(/ \(choose from the list\)$/, ""), company: /why|interest|excite/i.test(q) ? r.company : "" })}>Save an answer</button></li>)}</ul></details>)}
                     <span className="grow" />
+                    <select className="select auto sm ai-status" value={r.status || ""} onChange={e => setStatus(r, e.target.value)} aria-label="Status">
+                      <option value="" disabled>Status</option>
+                      {Object.entries(d.statuses || {}).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                    </select>
+                    <Button size="sm" variant={r.report ? "" : "ghost"} icon="sparkles" onClick={() => setReportFor(r)}>{r.report ? "Report" : "Evaluate"}</Button>
                     {["needs_you", "blocked"].includes(r.apply?.state) && (
                       <Button size="sm" icon="copy" variant={r.apply.state === "blocked" ? "primary" : ""} onClick={() => setKitFor(r)}>Apply in my browser</Button>)}
                     {r.can_apply && d.can_hand_over && ["needs_you", "ready", undefined].includes(r.apply?.state) && (
@@ -227,312 +308,25 @@ export default function AIJobs() {
       {d && d.state === "idle" && (
         <div className="ai-how">
           {[["file", "Reads your resume", "Finds your skills and experience in the PDF you choose."], ["search", "Searches for openings", "Company career sites, plus web search if you add a key."],
-            ["sparkles", "Ranks every match", "Scores role, skills, experience and wording, and tells you why."], ["send", "Applies if you allow", "Fills public application forms on Greenhouse, Lever and Ashby for jobs you pick."]].map(([ic, t, s], i) => (
+            ["sparkles", "Ranks and evaluates", "Scores every match, then a full report out of 5: fit, gaps, pay, whether the posting is real."], ["send", "Applies if you allow", "Fills application forms on job boards and company sites for jobs you pick, learns from your feedback, and reminds you to follow up."]].map(([ic, t, s], i) => (
             <div key={t} className="card card-pad"><span className="ai-how-n">0{i + 1}</span><Icon name={ic} /><b>{t}</b><p className="help">{s}</p></div>
           ))}
         </div>
       )}
 
       <ExtensionDrawer open={extOpen} onClose={() => setExtOpen(false)} />
+      <ReportDrawer job={reportFor} onClose={() => setReportFor(null)} onEvaluated={load} onAnswers={q => { setReportFor(null); loadAnswers(); setAnswersOpen(q); }} />
+      <RulesDrawer open={rulesOpen} onClose={() => setRulesOpen(false)} rules={d?.rules} onSaved={rules => setD(x => ({ ...x, rules }))} />
+      <FollowupsDrawer open={fuOpen} onClose={() => setFuOpen(false)} onChanged={load} />
+      <InsightsDrawer open={insOpen} onClose={() => setInsOpen(false)} />
+      <ModelDrawer open={modelOpen} onClose={() => setModelOpen(false)} onSaved={load} />
+      <CompaniesDrawer open={coOpen} onClose={() => setCoOpen(false)} />
+      <UpdateDrawer open={updOpen} onClose={() => setUpdOpen(false)} />
+      <LearningDrawer open={learnOpen} onClose={() => setLearnOpen(false)} onChanged={load} />
       <KitDrawer job={kitFor} onClose={() => setKitFor(null)} onAnswers={q => { setKitFor(null); setAnswersOpen(q); }} />
       <AnswersDrawer open={answersOpen} onClose={() => setAnswersOpen(null)} answers={answers} reload={loadAnswers} />
       <KeysDrawer open={keysOpen} onClose={() => setKeysOpen(false)} keys={d?.keys || {}} onSaved={k => { setD(x => ({ ...x, keys: k })); }} />
       <ApplyDrawer open={applyOpen} onClose={() => setApplyOpen(false)} d={d} me={app.data.profile} onSaved={r => setD(x => ({ ...x, details: r.details, consent: r.consent }))} />
     </div>
-  );
-}
-
-function LiveView({ active }) {
-  const [v, setV] = useState(null);
-  useEffect(() => {
-    let stop = false, t;
-    const tick = async () => {
-      try { const r = await api("/api/ai-jobs/live"); if (!stop) setV(r.active ? r : null); } catch { /* keep the last frame */ }
-      if (!stop) t = setTimeout(tick, active ? 900 : 4000);
-    };
-    tick();
-    return () => { stop = true; clearTimeout(t); };
-  }, [active]);
-  if (!v?.active && !active) return null;
-  if (!v?.job) return null;
-  return (
-    <div className="card ai-live">
-      <div className="ai-live-head"><span className="ai-live-dot" />Live: {v.job}</div>
-      <div className="ai-live-body">
-        <div className="ai-live-screen">{v.frame ? <img src={v.frame} alt="What the application browser shows right now" /> : <div className="help">Starting the browser…</div>}</div>
-        <ol className="ai-live-log">{v.log.map((l, i) => <li key={i} className={i === v.log.length - 1 ? "now" : ""}>{l}</li>)}</ol>
-      </div>
-    </div>
-  );
-}
-
-const KEY_STEPS = {
-  tavily: [
-    <>Open <a className="link" href="https://app.tavily.com" target="_blank" rel="noopener noreferrer">app.tavily.com</a> and sign up (Google, GitHub or email). No credit card is needed.</>,
-    <>Your dashboard opens with an API key already made. It starts with <code>tvly-</code>.</>,
-    <>Click the copy icon next to the key, paste it below and press <b>Save</b>.</>,
-    <>The free plan gives 1,000 searches a month; one Reachout search uses one or two.</>,
-  ],
-  brave: [
-    <>Open <a className="link" href="https://api-dashboard.search.brave.com" target="_blank" rel="noopener noreferrer">api-dashboard.search.brave.com</a> and create an account, then confirm your email.</>,
-    <>Go to <b>Subscriptions</b> and pick the <b>Search</b> plan. Brave asks for a credit card and adds $5 of free credit every month (about 1,000 searches).</>,
-    <>To avoid charges, set a monthly limit in the dashboard if it offers one, and keep an eye on usage. Brave's terms ask for a “Powered by Brave” mention to keep the free credit.</>,
-    <>Go to <b>API Keys</b>, click <b>Add API key</b>, name it “Reachout”, copy it, paste it below and press <b>Save</b>.</>,
-  ],
-};
-
-function ExtensionDrawer({ open, onClose }) {
-  const [st, setSt] = useState(null);
-  const [key, setKey] = useState("");
-  const [busy, setBusy] = useState(false);
-  useEffect(() => { if (open) { setKey(""); api("/api/extension").then(setSt).catch(fail); } }, [open]);
-  const create = async () => {
-    if (st?.has_key && !await modal({ title: "Create a new key?", text: "The extension stops working with the old key until you paste the new one.", confirm: "Create new key" })) return;
-    setBusy(true);
-    try { const r = await api("/api/extension/key", { json: {} }); setKey(r.key); setSt(x => ({ ...x, has_key: true })); } catch (e) { fail(e); }
-    setBusy(false);
-  };
-  const [installed, setInstalled] = useState("");
-  const install = async () => {
-    setBusy(true);
-    try { const r = await api("/api/extension/install", { json: {} }); setInstalled(r.folder); toast("Unpacked into Documents. Finder is showing the folder."); } catch (e) { fail(e); }
-    setBusy(false);
-  };
-  const revoke = async () => { await api("/api/extension/key", { method: "DELETE" }).catch(fail); setKey(""); setSt(x => ({ ...x, has_key: false })); toast("Key revoked. The extension can't reach your account any more."); };
-  const copy = async () => { try { await navigator.clipboard.writeText(key); toast("Key copied"); } catch { toast("Select the key and copy it.", true); } };
-  return (
-    <Drawer open={open} onClose={onClose} label="Browser extension" wide>
-      <DrawerHead title="Reachout Autofill" sub="A Chrome extension that fills job applications in your own browser. You check the form and press Submit." onClose={onClose} />
-      <div className="dr-pad ai-drawer">
-        <div className="ai-ext-what">
-          {[["sparkles", "Fills it for you", "Your details, resume, location and approved answers, in one click."], ["shield", "In your browser", "No robot: it's your browser and your Submit, so sites accept it."],
-            ["note", "Learns with you", "“Save my answers” sends what you typed to My answers for your approval."]].map(([ic, t, d]) => (
-            <div key={t}><Icon name={ic} /><b>{t}</b><span className="help">{d}</span></div>))}
-        </div>
-        <h4 className="sec-h" style={{ margin: 0 }}>Set it up (about 2 minutes, once)</h4>
-        <ol className="ai-ext-steps">
-          {st?.can_install ? (
-            <li><Button size="sm" variant="primary" icon="folder" busy={busy} onClick={install}>Get the unpacked folder</Button> puts the extension, already unpacked, in
-              <code>{st.folder}</code> and opens it in Finder. Leave it there: Chrome loads it from that folder.
-              {installed && <div className="help" style={{ marginTop: 6 }}>✓ Ready in {installed}</div>}
-              <div className="help" style={{ marginTop: 6 }}>Or <a className="link" href="/downloads/reachout-autofill.zip" download>download the zip</a> and double-click it to unzip.</div></li>
-          ) : (
-            <li><a className="btn btn-sm btn-primary" href="/downloads/reachout-autofill.zip" download><Icon name="download" />Download the extension</a> and double-click the zip
-              to unpack it (browsers can only download files, so the folder comes zipped). Move the folder somewhere it can stay, like Documents.</li>
-          )}
-          <li>In Chrome, open <code>chrome://extensions</code> (type it in the address bar) and turn on <b>Developer mode</b> (top right).</li>
-          <li>Click <b>Load unpacked</b> and pick the <b>{st?.can_install ? "Reachout Autofill" : "unzipped"}</b> folder (tip: <b>Cmd + Shift + G</b> lets you paste its path). Pin it from the puzzle-piece icon so it's always in your toolbar.</li>
-          <li>Create your extension key below, click the extension, choose <b>On this Mac</b> (or <b>Online</b> if you use the website), paste the key and press <b>Connect</b>.</li>
-        </ol>
-        <div className="ai-answer">
-          <div className="ai-answer-head"><b>Extension key</b>{st?.has_key ? <Badge tone="ok">Active</Badge> : <Badge>Not created</Badge>}
-            {st?.last_used > 0 && <span className="help">Last used {new Date(st.last_used * 1000).toLocaleString()}</span>}</div>
-          {key ? <>
-            <div className="ai-key-row"><input className="input mono" readOnly value={key} onFocus={e => e.target.select()} /><Button variant="primary" icon="copy" onClick={copy}>Copy</Button></div>
-            <span className="help">Shown once. Paste it into the extension now. It only lets the extension read your application details and save answers for your review.</span>
-          </> : <span className="help">The key connects the extension to your account. It can't send emails, change settings or see anything else.</span>}
-          <div className="ai-answer-foot"><span className="grow" />
-            {st?.has_key && <Button size="sm" variant="ghost" onClick={revoke}>Revoke</Button>}
-            <Button size="sm" variant={st?.has_key ? "" : "primary"} icon="plus" busy={busy} onClick={create}>{st?.has_key ? "Create a new key" : "Create key"}</Button></div>
-        </div>
-        <h4 className="sec-h" style={{ margin: 0 }}>Using it</h4>
-        <ol className="ai-ext-steps">
-          <li>Open a job application form (from a match: <b>Apply in my browser → Open the application form</b>).</li>
-          <li>Click <b>Reachout Autofill → Fill this application</b>. Filled fields turn green, unapproved drafts amber (only if you tick that option), and questions that need you red.</li>
-          <li>Answer the red ones, check everything, and press the site's <b>Submit</b> yourself.</li>
-          <li>Before submitting, click <b>Save my answers on this page</b> so Reachout can fill them next time, after you approve them in My answers.</li>
-        </ol>
-      </div>
-    </Drawer>
-  );
-}
-
-function KitDrawer({ job, onClose, onAnswers }) {
-  const [k, setK] = useState(null);
-  useEffect(() => { setK(null); if (job) api(`/api/ai-jobs/kit/${encodeURIComponent(job.id)}`).then(setK).catch(e => { fail(e); onClose(); }); }, [job]); // eslint-disable-line react-hooks/exhaustive-deps
-  const copy = async (text, what) => { try { await navigator.clipboard.writeText(text); toast(`${what} copied`); } catch { toast("Couldn't copy. Select the text and copy it.", true); } };
-  return (
-    <Drawer open={!!job} onClose={onClose} label="Apply in my browser" wide>
-      <DrawerHead title="Apply in my browser" sub={job ? `${job.title} · ${job.company}` : ""} onClose={onClose} />
-      <div className="dr-pad ai-drawer">
-        {!k ? <p className="help">Loading…</p> : <>
-          <Alert tone="info" icon="shield">Some sites only accept applications from a person's own browser. Open the form in your browser and click
-            the <b>Reachout Autofill</b> extension to fill it in one go (set it up under “Browser extension”), or copy each answer from here.</Alert>
-          <div className="form-actions" style={{ justifyContent: "flex-start" }}>
-            <a className="btn btn-primary" href={k.apply_url} target="_blank" rel="noopener noreferrer"><Icon name="link" />Open the application form</a>
-            <a className="btn" href="/app/files" target="_blank" rel="noopener noreferrer"><Icon name="file" />Download resume</a>
-          </div>
-          <div className="ai-kit">
-            {k.fields.map(f => (
-              <div key={f.label} className="ai-kit-row"><span className="help">{f.label}</span><b>{f.value}</b>
-                <Button size="sm" variant="ghost" icon="copy" onClick={() => copy(f.value, f.label)}>Copy</Button></div>
-            ))}
-          </div>
-          {k.answers.length > 0 && <h4 className="sec-h" style={{ margin: "6px 0 0" }}>Questions on this form</h4>}
-          {k.answers.map(a => (
-            <div key={a.question} className={`ai-answer ${a.draft ? "review" : ""}`}>
-              <div className="ai-answer-head"><b>{a.question}</b>{a.draft && <Badge tone="warn">Draft: check it first</Badge>}</div>
-              {a.answer ? <>
-                <p className="ai-kit-answer">{a.answer}</p>
-                <div className="ai-answer-foot"><span className="grow" /><Button size="sm" icon="copy" onClick={() => copy(a.answer, "Answer")}>Copy answer</Button></div>
-              </> : <div className="ai-answer-foot"><span className="help">No saved answer yet.</span><span className="grow" />
-                <Button size="sm" variant="ghost" icon="note" onClick={() => onAnswers({ question: a.question, company: /why|interest|excite/i.test(a.question) ? job.company : "" })}>Write an answer</Button></div>}
-            </div>
-          ))}
-        </>}
-      </div>
-    </Drawer>
-  );
-}
-
-function AnswersDrawer({ open, onClose, answers, reload }) {
-  const [tab, setTab] = useState("all");
-  const [draft, setDraft] = useState({ question: "", answer: "", company: "" });
-  const [edits, setEdits] = useState({});
-  const [busy, setBusy] = useState("");
-  const [err, setErr] = useState({});
-  useEffect(() => { if (open) { setDraft({ question: open.question || "", answer: "", company: open.company || "" }); setErr({}); setEdits({}); if (open.question) setTab("all"); } }, [open]);
-  const add = async () => {
-    setBusy("add");
-    try { await api("/api/ai-jobs/answers", { json: draft }); setDraft({ question: "", answer: "", company: "" }); toast("Answer saved. Reachout AI will use it on matching questions."); reload(); }
-    catch (e) { e.field ? setErr({ [e.field]: e.message }) : fail(e); }
-    setBusy("");
-  };
-  const save = async (a, approve) => {
-    setBusy(a.id);
-    try { await api(`/api/ai-jobs/answers/${a.id}`, { method: "PUT", json: { ...a, ...(edits[a.id] || {}), approve } }); setEdits(x => ({ ...x, [a.id]: undefined })); reload(); }
-    catch (e) { fail(e); }
-    setBusy("");
-  };
-  const del = async a => { await api(`/api/ai-jobs/answers/${a.id}`, { method: "DELETE" }).catch(fail); reload(); };
-  const approveAll = async () => { const r = await api("/api/ai-jobs/answers/approve-all", { json: {} }).catch(fail); r && toast(`${r.approved} approved`); reload(); };
-  const review = answers.filter(a => a.status === "review");
-  const shown = tab === "review" ? review : answers;
-  const ed = (a, k) => (edits[a.id] || {})[k] ?? a[k] ?? "";
-  const setEd = (a, k, v) => setEdits(x => ({ ...x, [a.id]: { ...(x[a.id] || {}), [k]: v } }));
-  return (
-    <Drawer open={!!open} onClose={onClose} label="My answers" wide>
-      <DrawerHead title="My answers" sub="Answers Reachout AI uses on application forms. It learns from forms you fill in; you approve what it keeps." onClose={onClose} />
-      <div className="dr-pad ai-drawer">
-        <div className="ai-answer-new card card-pad">
-          <b>Add an answer</b>
-          <Field label="Question" error={err.question}><input className="input" value={draft.question} maxLength={300} placeholder="Will you require visa sponsorship?" onChange={e => setDraft(x => ({ ...x, question: e.target.value }))} /></Field>
-          <Field label="Your answer" error={err.answer} hint="For dropdowns and Yes/No questions, write the option exactly as the form shows it (e.g. Yes, No, LinkedIn).">
-            <textarea className="input" rows={4} value={draft.answer} maxLength={4000} onChange={e => setDraft(x => ({ ...x, answer: e.target.value }))} /></Field>
-          <Field label="Only for company" opt="(optional)" hint="Set it for answers like “Why do you want to work here?”, so they never go to another company. You can write {company} in a general answer.">
-            <input className="input" value={draft.company} maxLength={80} placeholder="Notion" onChange={e => setDraft(x => ({ ...x, company: e.target.value }))} /></Field>
-          <div className="form-actions"><span className="grow" /><Button variant="primary" icon="check" busy={busy === "add"} disabled={!draft.question.trim() || !draft.answer.trim()} onClick={add}>Save answer</Button></div>
-        </div>
-        <div className="toolbar" style={{ margin: 0 }}>
-          <Seg value={tab} onChange={setTab} name="Which answers" size="sm" options={[["all", "All", null, answers.length || undefined], ["review", "To review", null, review.length || undefined]]} />
-          <span className="grow" />
-          {review.length > 0 && <Button size="sm" icon="check" onClick={approveAll}>Approve all</Button>}
-        </div>
-        {!shown.length && <Empty icon="note" title={tab === "review" ? "Nothing to review" : "No saved answers yet"}>
-          {tab === "review" ? "Answers you type in application forms appear here for you to approve." : "Add one above, or apply with “Watch it in a browser window”: what you answer there is saved here for your review."}</Empty>}
-        {shown.map(a => (
-          <div key={a.id} className={`ai-answer ${a.status}`}>
-            <div className="ai-answer-head">
-              {a.status === "review" ? <Badge tone="warn">To review</Badge> : <Badge tone="ok">Used in forms</Badge>}
-              {a.company && <Badge dot={false}>Only {a.company}</Badge>}
-              <span className="help">{a.source === "learned" ? `Learned from ${a.learned_from}` : a.source === "draft" ? "Draft by Reachout AI: check it's true for you" : "Added by you"}</span>
-            </div>
-            <input className="input ai-answer-q" value={ed(a, "question")} onChange={e => setEd(a, "question", e.target.value)} aria-label="Question" />
-            <textarea className="input" rows={Math.min(8, Math.max(2, Math.ceil(ed(a, "answer").length / 80)))} value={ed(a, "answer")} onChange={e => setEd(a, "answer", e.target.value)} aria-label="Answer" />
-            <div className="ai-answer-foot">
-              <input className="input ai-answer-co" value={ed(a, "company")} placeholder="Any company" onChange={e => setEd(a, "company", e.target.value)} aria-label="Only for company" />
-              <span className="grow" />
-              <Button size="sm" variant="ghost" icon="trash" onClick={() => del(a)}>Delete</Button>
-              {edits[a.id] && a.status === "approved" && <Button size="sm" busy={busy === a.id} onClick={() => save(a, true)}>Save</Button>}
-              {a.status === "review" && <Button size="sm" variant="primary" icon="check" busy={busy === a.id} onClick={() => save(a, true)}>Approve</Button>}
-            </div>
-          </div>
-        ))}
-      </div>
-    </Drawer>
-  );
-}
-
-function KeysDrawer({ open, onClose, keys, onSaved }) {
-  const [v, setV] = useState({ tavily: "", brave: "" });
-  const [busy, setBusy] = useState(false);
-  const save = async (k, value) => {
-    setBusy(true);
-    try { onSaved(await api("/api/ai-jobs/keys", { method: "PUT", json: { [k]: value } })); setV(x => ({ ...x, [k]: "" })); toast(value ? "Key saved" : "Key removed"); }
-    catch (e) { fail(e); }
-    setBusy(false);
-  };
-  return (
-    <Drawer open={open} onClose={onClose} label="Search keys">
-      <DrawerHead title="Web search keys" sub="Optional. Career sites work without any key." onClose={onClose} />
-      <div className="dr-pad ai-drawer">
-        {SOURCES.slice(1).map(([id, label, hint, url]) => (
-          <div key={id} className="ai-key">
-            <b>{label}</b> {keys[id] && <Badge tone="ok">Saved</Badge>}
-            <p className="help">{hint}</p>
-            <details className="ai-steps-howto" open={!keys[id]}>
-              <summary>How to get a {label.split(" ")[0]} key</summary>
-              <ol>{KEY_STEPS[id].map((step, i) => <li key={i}>{step}</li>)}</ol>
-              <a className="btn btn-sm" href={url} target="_blank" rel="noopener noreferrer">Open {label.split(" ")[0]}<Icon name="link" /></a>
-            </details>
-            <div className="ai-key-row">
-              <input className="input" type="password" autoComplete="off" value={v[id]} placeholder={keys[id] ? "Replace the saved key" : "Paste your API key"} onChange={e => setV(x => ({ ...x, [id]: e.target.value }))} />
-              <Button variant="primary" busy={busy} disabled={!v[id].trim()} onClick={() => save(id, v[id].trim())}>Save</Button>
-              {keys[id] && <Button variant="ghost" onClick={() => save(id, "")}>Remove</Button>}
-            </div>
-          </div>
-        ))}
-        <Alert tone="info">You don't need either key: <b>Company career sites</b> works without one. Keys are stored encrypted, used only for your own searches, and never shown again or sent to your browser.</Alert>
-      </div>
-    </Drawer>
-  );
-}
-
-function ApplyDrawer({ open, onClose, d, me, onSaved }) {
-  const [v, setV] = useState({});
-  const [ok, setOk] = useState(false);
-  const [err, setErr] = useState({});
-  const [busy, setBusy] = useState(false);
-  useEffect(() => { if (open) { setV(d?.details || {}); setOk(!!d?.consent); setErr({}); } }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
-  const save = async consent => {
-    setBusy(true);
-    try { const r = await api("/api/ai-jobs/details", { method: "PUT", json: { ...v, consent } }); onSaved(r); toast(consent ? "Auto-apply is on. Pick jobs and press Auto-apply." : "Saved"); onClose(); }
-    catch (e) { e.field ? setErr({ [e.field]: e.message }) : fail(e); }
-    setBusy(false);
-  };
-  const F = [["linkedin", "LinkedIn", "https://linkedin.com/in/…"], ["github", "GitHub", "https://github.com/…"], ["portfolio", "Portfolio", "https://…"],
-    ["current_company", "Current company", ""], ["location", "Current city", "Bengaluru"], ["notice", "Notice period", "30 days"]];
-  return (
-    <Drawer open={open} onClose={onClose} label="Auto-apply">
-      <DrawerHead title="Auto-apply" sub="Reachout AI fills job applications with these details." onClose={onClose} />
-      <div className="dr-pad ai-drawer">
-        <p className="help">From your profile: <b>{me?.name || "add your name"}</b> · {me?.email || "your email"} · {me?.phone || <a className="link" href="/app/profile">add your phone</a>}</p>
-        <div className="grid-2">
-          {F.map(([k, label, ph]) => (
-            <Field key={k} label={label} opt="(optional)" error={err[k]}>
-              <input className="input" value={v[k] || ""} placeholder={ph} maxLength={200} onChange={e => setV(x => ({ ...x, [k]: e.target.value }))} />
-            </Field>
-          ))}
-        </div>
-        <Field label="Cover letter" hint="Attached when a form has a cover letter field, or pasted where it asks for the letter as text. Forms without one never get it.">
-          <select className="select" value={v.cover_letter || "auto"} onChange={e => setV(x => ({ ...x, cover_letter: e.target.value }))}>
-            <option value="auto">{d?.cover_letter ? `Automatic: ${d.cover_letter}` : "Automatic (a file with “cover” in its name)"}</option>
-            {(d?.documents || []).map(n => <option key={n} value={n}>{n}</option>)}
-            <option value="none">Don't send a cover letter</option>
-          </select>
-        </Field>
-        <Alert tone="warn" icon="shield">
-          <b>How it works.</b> Only jobs you tick are applied to, at most {d?.apply_per_day || 20} a day, and only on public application forms
-          (Greenhouse, Lever, Ashby). It never logs in to any site, never makes up answers, and stops at CAPTCHAs. Anything it can't
-          finish is marked “Needs you” with a link. Each submitted application is added to your Applications page.
-        </Alert>
-        <Check checked={ok} onChange={setOk}>I allow Reachout AI to submit applications on my behalf for the jobs I select.</Check>
-        <div className="form-actions">
-          {d?.consent && <Button variant="ghost" onClick={() => save(false)}>Turn off auto-apply</Button>}
-          <span className="grow" />
-          <Button variant="primary" icon="check" busy={busy} disabled={!ok} onClick={() => save(true)}>Save and turn on</Button>
-        </div>
-      </div>
-    </Drawer>
   );
 }
