@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Field, Seg, Switch } from "../../ui/kit";
 
 export const CHOICE_LABELS = {
+  look: ["Look", { modern: "Modern", notebook: "Notebook" }],
   card: ["Card style", { flat: "Flat", border: "Outlined", raised: "Shadow", glass: "Glass" }],
   button: ["Buttons", { gradient: "Gradient", solid: "Solid", outline: "Outline", pill: "Pill" }],
   background: ["Background", { plain: "Plain", glow: "Glow", grid: "Grid", dots: "Dots" }],
@@ -46,6 +47,7 @@ export function Design({ draft, meta, edit }) {
     </Field>
     {Object.entries(CHOICE_LABELS).map(([k, [label, opts]]) => (
       <Field key={k} label={label} style={{ marginTop: 12 }}><Seg size="sm" value={t[k]} onChange={v => set(k, v)} options={meta.choices[k].map(v => [v, opts[v] || v])} /></Field>))}
+    {t.look === "notebook" && <p className="help" style={{ marginTop: 10 }}>Tip: put a phrase in *asterisks* in a headline (for example <code>hi, I build *LLM agents*</code>) and it's set in italic accent colour, like on a notebook page.</p>}
     <div className="wb-switch" style={{ marginTop: 14 }}><Switch checked={t.animate} onChange={v => set("animate", v)}>Animate sections as visitors scroll</Switch></div>
   </>;
 }

@@ -235,3 +235,6 @@ kbd { font: 600 11px var(--mono); background: var(--muted); border: 1px solid va
   .me-pop { width: auto; }
   .job-pill span:last-child { display: none; }
 }
+.pw-wrap{position:relative}.pw-wrap .input{padding-right:42px}
+.pw-toggle{position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--text-3);display:grid;place-items:center}
+.pw-toggle .i{width:18px;height:18px}

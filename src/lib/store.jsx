@@ -69,7 +69,7 @@ export function AppProvider({ children }) {
   const patchRecipient = (id, row) => setData(d => ({ ...d, recipients: d.recipients.map(r => r.id === id ? { ...r, ...row } : r) }));
 
   const value = {
-    me, data, setData, reload, wa, setWa, job, setJob, pollJob, error, loaded: !!me,
+    me, setMe, data, setData, reload, wa, setWa, job, setJob, pollJob, error, loaded: !!me,
     selected, setSelected, counts, setCounts, links, setLinks, refreshCounts, patchRecipient,
     campaignPreset, setCampaignPreset,
   };

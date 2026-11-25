@@ -26,7 +26,9 @@ export default function Settings() {
     catch (err) { applyError(err, setErrors); }
     setBusy("");
   };
+  const hasPw = !!app.me.has_password;
   const request = async () => {
+    if (hasPw) { setDel({ password: true }); setCode(""); return; }
     setBusy("req");
     try { const d = await api("/api/account/delete/request", { json: {} }); setDel({ dev: d.dev }); setLeft(d.resend_in || 60); setCode(""); }
     catch (e) { fail(e); }
@@ -34,9 +36,19 @@ export default function Settings() {
   };
   const confirm = async e => {
     e.preventDefault(); setErrors({});
-    if (!/^\d{6}$/.test(code)) return setErrors({ code: "Enter the 6-digit code from the email." });
+    if (del.password ? !code : !/^\d{6}$/.test(code)) return setErrors({ code: del.password ? "Enter your password." : "Enter the 6-digit code from the email." });
     setBusy("del");
-    try { await api("/api/account/delete", { json: { code } }); location.href = LANDING; } catch (err) { applyError(err, setErrors); setBusy(""); }
+    try { await api("/api/account/delete", { json: del.password ? { password: code } : { code } }); location.href = LANDING; }
+    catch (err) { applyError(err, e => setErrors(x => ({ ...x, code: e.password || e.code || Object.values(e)[0] }))); setBusy(""); }
+  };
+  const [pw, setPw] = useState({ current: "", password: "" });
+  const savePw = async e => {
+    e.preventDefault(); setErrors({});
+    if (pw.password.length < 8) return setErrors({ password: "Use at least 8 characters." });
+    setBusy("pw");
+    try { await api("/api/account/password", { json: pw }); app.setMe(m => ({ ...m, has_password: true })); setPw({ current: "", password: "" }); toast(hasPw ? "Password changed" : "Password set. You can now log in with it."); }
+    catch (err) { applyError(err, setErrors); }
+    setBusy("");
   };
   return (
     <div className="settings">
@@ -51,7 +63,14 @@ export default function Settings() {
       </motion.form>
       <motion.div className="card card-pad" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .05 }}>
         <h3 className="sec-h"><Icon name="shield" />Sign-in</h3>
-        <p className="help">You sign in with a one-time code sent to <b>{app.me.email}</b>. There's no password to remember. Your session is kept in a secure, HttpOnly cookie.</p>
+        <p className="help">You log in with <b>{app.me.email}</b> and your password. Your session is kept in a secure, HttpOnly cookie.</p>
+        <form onSubmit={savePw} noValidate style={{ marginTop: 14 }}>
+          <div className="row-2">
+            {hasPw && <Field label="Current password" error={errors.current}><input className="input" type="password" autoComplete="current-password" value={pw.current} onChange={e => setPw(x => ({ ...x, current: e.target.value }))} maxLength={128} /></Field>}
+            <Field label={hasPw ? "New password" : "Set a password"} error={errors.password} hint="At least 8 characters."><input className="input" type="password" autoComplete="new-password" value={pw.password} onChange={e => setPw(x => ({ ...x, password: e.target.value }))} maxLength={128} /></Field>
+          </div>
+          <div className="form-actions"><span className="grow" /><Button type="submit" variant="primary" busy={busy === "pw"} busyLabel="Saving…">{hasPw ? "Change password" : "Set password"}</Button></div>
+        </form>
       </motion.div>
       <motion.div className="card card-pad danger-zone" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .1 }}>
         <h3 className="sec-h"><Icon name="trash" />Delete account</h3>
@@ -59,9 +78,11 @@ export default function Settings() {
         <AnimatePresence mode="wait">
           {!del ? <motion.div key="a" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><Button variant="danger" icon="trash" busy={busy === "req"} busyLabel="Sending code…" onClick={request}>Delete my account</Button></motion.div>
             : <motion.form key="b" onSubmit={confirm} noValidate initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0 }}>
-              <Alert tone="warn" style={{ marginBottom: 14 }}>We sent a 6-digit code to your email. Enter it to confirm.{del.dev && " (Local mode: the code is printed in the terminal running the app.)"}</Alert>
-              <Field label="Confirmation code" error={errors.code} style={{ maxWidth: 260 }}><input className="input code-input" inputMode="numeric" autoComplete="one-time-code" maxLength={6} placeholder="000000" value={code} onChange={e => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))} autoFocus /></Field>
-              <div className="form-actions"><Button onClick={() => setDel(null)}>Cancel</Button><Button variant="ghost" disabled={left > 0} onClick={request}>{left > 0 ? `Resend in ${left}s` : "Resend code"}</Button><span className="grow" />
+              <Alert tone="warn" style={{ marginBottom: 14 }}>{del.password ? "Enter your password to confirm." : <>We sent a 6-digit code to your email. Enter it to confirm.{del.dev && " (Local mode: the code is printed in the terminal running the app.)"}</>}</Alert>
+              {del.password
+                ? <Field label="Password" error={errors.code} style={{ maxWidth: 320 }}><input className="input" type="password" autoComplete="current-password" maxLength={128} value={code} onChange={e => setCode(e.target.value)} autoFocus /></Field>
+                : <Field label="Confirmation code" error={errors.code} style={{ maxWidth: 260 }}><input className="input code-input" inputMode="numeric" autoComplete="one-time-code" maxLength={6} placeholder="000000" value={code} onChange={e => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))} autoFocus /></Field>}
+              <div className="form-actions"><Button onClick={() => setDel(null)}>Cancel</Button>{!del.password && <Button variant="ghost" disabled={left > 0} onClick={request}>{left > 0 ? `Resend in ${left}s` : "Resend code"}</Button>}<span className="grow" />
                 <Button type="submit" variant="danger-solid" busy={busy === "del"} busyLabel="Deleting…">Delete forever</Button></div>
             </motion.form>}
         </AnimatePresence>
