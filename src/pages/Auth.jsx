@@ -68,7 +68,7 @@ export default function Auth({ signup }) {
       </main>
       <footer className="auth2-foot">
         <span>By continuing you agree to the <a href={`${LEGAL}/terms`} target="_blank" rel="noopener noreferrer">terms</a> and <a href={`${LEGAL}/privacy`} target="_blank" rel="noopener noreferrer">privacy policy</a>.</span>
-        <span>Not affiliated with WhatsApp or Meta.</span>
+        <span>Made by <a href="https://sarbeshtiwari.vercel.app" target="_blank" rel="noopener author">Sarbesh Kumar Tiwari</a> · Not affiliated with WhatsApp or Meta.</span>
       </footer>
       <ModalHost /><Toasts />
     </div>

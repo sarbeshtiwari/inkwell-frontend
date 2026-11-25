@@ -1,5 +1,7 @@
 # Inkwell app (frontend)
 
+Built and maintained by **[Sarbesh Kumar Tiwari](https://sarbeshtiwari.vercel.app)** · [GitHub](https://github.com/sarbeshtiwari)
+
 The React app where people use Inkwell: `/app` (the workspace), `/login` and `/signup`.
 
 Inkwell brings outreach and the job search into one place. Users send personal email (and optionally WhatsApp)

@@ -178,6 +178,7 @@ function Sidebar({ active, counts, collapsed, mobileOpen, toggle, openPalette })
           <span className="usage-n">{sent}</span>
           <span className="nav-text usage-txt"><b>{sent} of {limit} sent today</b><small>{limit - sent > 0 ? `${limit - sent} left · resets at midnight` : "Limit reached · resets at midnight"}</small></span>
         </a>
+        <a className="nav-text made-by" href="https://sarbeshtiwari.vercel.app" target="_blank" rel="noopener author">made by <b>Sarbesh Kumar Tiwari</b></a>
       </div>
 
       {createPortal(

@@ -144,3 +144,9 @@ em { font-style: italic; color: var(--tomato); }
 .top-title h1 { font-family: var(--serif); font-weight: 500; letter-spacing: -.01em; font-size: 23px; }
 .card-head h3, .sec-h, .dr-head h3 { font-family: var(--serif); font-weight: 600; letter-spacing: 0; }
 .kpi b { font-family: var(--serif); font-weight: 500; }
+
+/* owner credit at the bottom of the sidebar */
+.made-by { display: block; text-align: center; margin-top: 8px; font-family: var(--hand); font-size: 16px; color: var(--text-4); text-decoration: none; }
+.made-by b { color: var(--tomato); font-weight: 600; }
+.made-by:hover b { text-decoration: underline; }
+[data-sidebar="collapsed"] .made-by { display: none; }
