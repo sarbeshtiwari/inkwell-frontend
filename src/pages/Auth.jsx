@@ -43,7 +43,7 @@ export default function Auth({ signup }) {
   );
   return (
     <div className="auth2">
-      <svg className="auth2-mark" viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 21.5h13v-4.6a3.6 3.6 0 0 0-2.8-3.5v-2.2H8.3v2.2a3.6 3.6 0 0 0-2.8 3.5z" /><path d="M7.6 17.4h8.8" /><path d="M12 9.6 9.4 5.6 12 1.8l2.6 3.8z" /><path d="M12 9.6V6.4" /></svg>
+      <svg className="auth2-mark" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="13" height="10" rx="1.6" /><path d="m3.4 7.6 6.1 4.6 6.1-4.6" /><path d="m21 4-6.5 9.5" /><path d="m14.5 13.5-.6 2.4 2.2-1.1" /></svg>
       <header className="auth2-top">
         <a href={LANDING} className="brand-link"><span className="logo"><Icon name="logo" /></span><span className="brand-name">Inkwell</span></a>
         <a href={LANDING} className="btn btn-sm btn-ghost">Back to site</a>
