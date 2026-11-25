@@ -30,7 +30,7 @@ function LocationPicker({ onFound, busy, area, google, useGoogle, setUseGoogle, 
       <div className="nb-locate-head">
         <span className="nb-pin"><Icon name="globe" /></span>
         <div>
-          <h3>{area ? "Search another place" : "Where should Reachout look?"}</h3>
+          <h3>{area ? "Search another place" : "Where should Inkwell look?"}</h3>
           <p className="help">Share your location once, or type a city and area. Your position is rounded to about 100 m and only used for this search.</p>
         </div>
       </div>
@@ -81,7 +81,7 @@ function GoogleDrawer({ open, onClose, has, onSaved }) {
         <details className="ai-steps-howto" open={!has}>
           <summary>How to get a Google Places key</summary>
           <ol>
-            <li>Open <a className="link" href="https://console.cloud.google.com/projectcreate" target="_blank" rel="noopener noreferrer">Google Cloud console</a> and create a project (name it "Reachout").</li>
+            <li>Open <a className="link" href="https://console.cloud.google.com/projectcreate" target="_blank" rel="noopener noreferrer">Google Cloud console</a> and create a project (name it "Inkwell").</li>
             <li>Turn on billing for it. Google asks for a card; each month Google gives a free allowance of Places calls (check the current one on its pricing page).</li>
             <li>Open <a className="link" href="https://console.cloud.google.com/apis/library/places.googleapis.com" target="_blank" rel="noopener noreferrer">Places API (New)</a> and press <b>Enable</b>.</li>
             <li>Go to <a className="link" href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer">Credentials</a>, <b>Create credentials → API key</b>. Under <b>API restrictions</b> pick <b>Places API (New)</b> only, then save.</li>
@@ -89,7 +89,7 @@ function GoogleDrawer({ open, onClose, has, onSaved }) {
             <li>Copy the key (it starts with <code>AIza</code>), paste it below and press <b>Save</b>.</li>
           </ol>
         </details>
-        <Alert tone="warn">Each search makes about 7–20 Google calls (several kinds of company, up to 60 results each). Reachout caps it at 60 Google searches a day per account.</Alert>
+        <Alert tone="warn">Each search makes about 7–20 Google calls (several kinds of company, up to 60 results each). Inkwell caps it at 60 Google searches a day per account.</Alert>
         <Field label="API key" hint="Stored encrypted, checked with Google once, never shown again.">
           <div className="ai-key-row">
             <input className="input" type="password" autoComplete="off" value={key} onChange={e => setKey(e.target.value)} placeholder={has ? "Replace the saved key" : "AIza…"} />

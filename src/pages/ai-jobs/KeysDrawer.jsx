@@ -8,13 +8,13 @@ export const KEY_STEPS = {
     <>Open <a className="link" href="https://app.tavily.com" target="_blank" rel="noopener noreferrer">app.tavily.com</a> and sign up (Google, GitHub or email). No credit card is needed.</>,
     <>Your dashboard opens with an API key already made. It starts with <code>tvly-</code>.</>,
     <>Click the copy icon next to the key, paste it below and press <b>Save</b>.</>,
-    <>The free plan gives 1,000 searches a month; one Reachout search uses one or two.</>,
+    <>The free plan gives 1,000 searches a month; one Inkwell search uses one or two.</>,
   ],
   brave: [
     <>Open <a className="link" href="https://api-dashboard.search.brave.com" target="_blank" rel="noopener noreferrer">api-dashboard.search.brave.com</a> and create an account, then confirm your email.</>,
     <>Go to <b>Subscriptions</b> and pick the <b>Search</b> plan. Brave asks for a credit card and adds $5 of free credit every month (about 1,000 searches).</>,
     <>To avoid charges, set a monthly limit in the dashboard if it offers one, and keep an eye on usage. Brave's terms ask for a “Powered by Brave” mention to keep the free credit.</>,
-    <>Go to <b>API Keys</b>, click <b>Add API key</b>, name it “Reachout”, copy it, paste it below and press <b>Save</b>.</>,
+    <>Go to <b>API Keys</b>, click <b>Add API key</b>, name it “Inkwell”, copy it, paste it below and press <b>Save</b>.</>,
   ],
 };
 

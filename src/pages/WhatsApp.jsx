@@ -9,7 +9,7 @@ export default function WhatsApp() {
   const { me } = useApp();
   if (me?.whatsapp === false) return (
     <div className="card"><Empty icon="phone" title="WhatsApp isn't available here">
-      This version of Reachout sends by email only. WhatsApp doesn't allow automated messaging, so it's switched off on this server.</Empty></div>
+      This version of Inkwell sends by email only. WhatsApp doesn't allow automated messaging, so it's switched off on this server.</Empty></div>
   );
   return <WhatsAppPage />;
 }

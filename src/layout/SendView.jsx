@@ -42,7 +42,7 @@ export default function SendView() {
     addEventListener("keydown", k); document.body.classList.add("sv-open");
     return () => { removeEventListener("keydown", k); document.body.classList.remove("sv-open"); };
   });
-  useEffect(() => { if (job.running) document.title = `(${job.done}/${job.total || "…"}) Sending · Reachout`; }, [job.running, job.done, job.total]);
+  useEffect(() => { if (job.running) document.title = `(${job.done}/${job.total || "…"}) Sending · Inkwell`; }, [job.running, job.done, job.total]);
 
   const ticks = useMemo(() => Array.from({ length: 60 }, (_, i) => {
     const a = (i / 60) * Math.PI * 2 - Math.PI / 2, r1 = 124, r2 = i % 5 ? 130 : 136;
@@ -136,7 +136,7 @@ export default function SendView() {
           <footer className="hud-foot">
             <div className="hud-progress" aria-hidden="true"><div style={{ width: `${pct * 100}%` }} /><div className="hud-segs">{Array.from({ length: Math.min(job.total || 0, 60) }, (_, i) => <i key={i} />)}</div></div>
             <div className="hud-foot-row">
-              {job.running && <p className="hud-note"><Icon name="info" />Runs on the server: it keeps going if you switch pages. Don't quit the Reachout app until it's finished.</p>}
+              {job.running && <p className="hud-note"><Icon name="info" />Runs on the server: it keeps going if you switch pages. Don't quit the Inkwell app until it's finished.</p>}
               {job.running ? (
                 <div className="hud-actions">
                   <button className="hud-btn" onClick={toBackground} autoFocus><Icon name="columns" />Continue in background</button>

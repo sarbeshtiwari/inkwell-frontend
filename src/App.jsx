@@ -40,12 +40,12 @@ export const TITLES = {
   contact: ["Contact", ""],
   templates: ["Templates", "Reusable messages. Fields like {name} and {company} are filled in for each person."],
   files: ["Files", "Files you can attach to messages, like a resume, brochure or price list."],
-  replies: ["Replies", "People who answered the emails you sent from Reachout, what they said, and what they're asking for."],
+  replies: ["Replies", "People who answered the emails you sent from Inkwell, what they said, and what they're asking for."],
   activity: ["Activity", "A record of every message sent from your account."],
-  inbox: ["Inbox insights", "Your inbox grouped by company and sorted into categories. Reachout only reads it."],
+  inbox: ["Inbox insights", "Your inbox grouped by company and sorted into categories. Inkwell only reads it."],
   applications: ["Applications", "Every job you've applied for, found in your mailbox, and where each one stands."],
   jobs: ["Job matches", "Jobs from the alert emails in your inbox, scored against your resume. You apply on the job site."],
-  posts: ["Hiring posts", "Paste a post that asks for CVs by email. Reachout drafts your reply and sends it after a delay you choose."],
+  posts: ["Hiring posts", "Paste a post that asks for CVs by email. Inkwell drafts your reply and sends it after a delay you choose."],
   naukri: ["Naukri", "Your Naukri applications, recruiter activity and job alerts, read from the emails Naukri sends you."],
   linkedin: ["LinkedIn", "Your LinkedIn profile and posts. Publish now or schedule for later."],
   portfolio: ["Portfolio", "Build and run your own one-page website, pick the projects it shows and read messages from visitors."],
@@ -53,7 +53,7 @@ export const TITLES = {
   whatsapp: ["WhatsApp", "Link your WhatsApp once. Messages are sent from your own number."],
   profile: ["Profile & email", "Your details, the email account messages are sent from, and Gmail sync."],
   settings: ["Settings", ""],
-  "ai-jobs": ["AI job match", "Tell Reachout AI what you want. It reads your resume, searches for openings, ranks every match and can apply for you."],
+  "ai-jobs": ["AI job match", "Tell Inkwell AI what you want. It reads your resume, searches for openings, ranks every match and can apply for you."],
   finder: ["Email finder", "Find the HR and careers email addresses that companies publish on their websites, then save them as contacts."],
   nearby: ["Companies near me", "Every company around you or any place you pick, on a map: what they do, their careers page, open jobs and the HR email they publish."],
   learning: ["Learning", "A 90-day interview course, daily DSA, spaced review of what you studied, and a morning briefing with papers, tech news and your job search."],
@@ -66,7 +66,7 @@ export default function App() {
   let page = P[route.page] ? route.page : "dashboard";
   const [title, sub] = TITLES[page];
 
-  useEffect(() => { document.title = `${title} · Reachout`; }, [title]);
+  useEffect(() => { document.title = `${title} · Inkwell`; }, [title]);
   useEffect(() => { window.scrollTo({ top: 0 }); }, [page]);
   useEffect(() => {
     const warn = e => { if (app.job.running) { e.preventDefault(); e.returnValue = ""; } };
@@ -111,7 +111,7 @@ function Boot() {
   return (
     <div className="boot">
       <motion.div className="boot-logo" initial={{ scale: .6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", stiffness: 300, damping: 18 }}>
-        <svg viewBox="0 0 24 24" className="i"><path d="M7 20v-9a4 4 0 0 1 4-4h7.5" /><path d="m15 3.5 3.5 3.5-3.5 3.5" /></svg>
+        <svg viewBox="0 0 24 24" className="i"><path d="M5.5 21.5h13v-4.6a3.6 3.6 0 0 0-2.8-3.5v-2.2H8.3v2.2a3.6 3.6 0 0 0-2.8 3.5z" /><path d="M7.6 17.4h8.8" /><path d="M12 9.6 9.4 5.6 12 1.8l2.6 3.8z" /><path d="M12 9.6V6.4" /></svg>
       </motion.div>
       <motion.div className="boot-bar" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: .2 }}><span /></motion.div>
     </div>

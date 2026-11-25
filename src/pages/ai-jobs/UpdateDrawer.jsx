@@ -22,14 +22,14 @@ export function UpdateDrawer({ open, onClose }) {
   };
   useEffect(() => { if (open) check(); return () => clearTimeout(timer.current); }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
   const go = async undo => {
-    if (!await modal({ title: undo ? "Go back to the previous version?" : "Update Reachout?", confirm: undo ? "Go back" : "Update",
-      text: "Reachout restarts when it's done; your contacts, applications and settings aren't touched." })) return;
+    if (!await modal({ title: undo ? "Go back to the previous version?" : "Update Inkwell?", confirm: undo ? "Go back" : "Update",
+      text: "Inkwell restarts when it's done; your contacts, applications and settings aren't touched." })) return;
     try { await api(undo ? "/api/update/undo" : "/api/update", { json: {} }); poll(); } catch (e) { fail(e); }
   };
   const running = job && ["running", "restarting"].includes(job.state);
   return (
     <Drawer open={open} onClose={onClose} label="Updates">
-      <DrawerHead title="Updates" sub="Get the newest Reachout from GitHub. Your data stays as it is." onClose={onClose} />
+      <DrawerHead title="Updates" sub="Get the newest Inkwell from GitHub. Your data stays as it is." onClose={onClose} />
       <div className="dr-pad ai-drawer">
         {!d ? <div className="ai-eval-wait"><Spinner /><span>Checking GitHub…</span></div> : <>
           {d.repos.map(r => (

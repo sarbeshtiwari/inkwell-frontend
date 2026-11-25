@@ -124,7 +124,7 @@ export default function Campaign() {
     <motion.div className="card cp-running" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
       <div className="cp-run-ring"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="52" className="bg" /><motion.circle cx="60" cy="60" r="52" className="fg" strokeDasharray={327} animate={{ strokeDashoffset: 327 * (1 - (job.total ? job.done / job.total : 0)) }} /></svg><b>{job.done}<span>/{job.total || "…"}</span></b></div>
       <h3>{job.dry_run ? "Test run in progress" : "Your campaign is sending"}</h3>
-      <p className="help">It runs on the server, so you can keep using Reachout. Open the live view to watch or stop it.</p>
+      <p className="help">It runs on the server, so you can keep using Inkwell. Open the live view to watch or stop it.</p>
       <Button variant="primary" size="lg" icon="activity" onClick={() => dispatchEvent(new Event("open-sendview"))}>Open live view</Button>
     </motion.div>
   );

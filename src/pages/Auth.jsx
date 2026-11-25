@@ -17,7 +17,7 @@ export default function Auth({ signup }) {
   const [formError, setFormError] = useState("");
   const [busy, setBusy] = useState(false);
 
-  useEffect(() => { document.title = signup ? "Create account · Reachout" : "Log in · Reachout"; }, [signup]);
+  useEffect(() => { document.title = signup ? "Create account · Inkwell" : "Log in · Inkwell"; }, [signup]);
 
   const submit = async e => {
     e.preventDefault(); setErrors({}); setFormError("");
@@ -43,9 +43,9 @@ export default function Auth({ signup }) {
   );
   return (
     <div className="auth2">
-      <svg className="auth2-mark" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 20v-9a4 4 0 0 1 4-4h7.5" /><path d="m15 3.5 3.5 3.5-3.5 3.5" /></svg>
+      <svg className="auth2-mark" viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 21.5h13v-4.6a3.6 3.6 0 0 0-2.8-3.5v-2.2H8.3v2.2a3.6 3.6 0 0 0-2.8 3.5z" /><path d="M7.6 17.4h8.8" /><path d="M12 9.6 9.4 5.6 12 1.8l2.6 3.8z" /><path d="M12 9.6V6.4" /></svg>
       <header className="auth2-top">
-        <a href={LANDING} className="brand-link"><span className="logo"><Icon name="logo" /></span><span className="brand-name">Reachout</span></a>
+        <a href={LANDING} className="brand-link"><span className="logo"><Icon name="logo" /></span><span className="brand-name">Inkwell</span></a>
         <a href={LANDING} className="btn btn-sm btn-ghost">Back to site</a>
       </header>
       <main className="auth2-main">

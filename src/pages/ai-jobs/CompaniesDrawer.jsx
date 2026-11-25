@@ -26,7 +26,7 @@ export function CompaniesDrawer({ open, onClose }) {
     <Drawer open={open} onClose={onClose} label="My companies" wide>
       <DrawerHead title="My companies and job boards" sub="Companies you want to work for: every search with Company career sites also reads their job boards." onClose={onClose} />
       {d && <div className="dr-pad ai-drawer">
-        <Field label="Add a company" hint="Paste the link of its careers page, even its own website's, or type its name. Reachout finds the job board behind it or reads the jobs on the site.">
+        <Field label="Add a company" hint="Paste the link of its careers page, even its own website's, or type its name. Inkwell finds the job board behind it or reads the jobs on the site.">
           <div className="ai-key-row">
             <input className="input" value={v} onChange={e => setV(e.target.value)} onKeyDown={e => e.key === "Enter" && add()} placeholder="https://careers.example.com or Example Inc" maxLength={400} />
             <Button variant="primary" busy={busy} busyLabel="Checking…" onClick={add}>Add</Button>

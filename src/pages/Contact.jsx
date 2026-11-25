@@ -25,7 +25,7 @@ export default function Contact({ route }) {
     try {
       const r = await api("/api/contacts/" + encodeURIComponent(id));
       setD(r); setForm(Object.fromEntries([...CORE, ...extraCols(app.data.recipients)].map(k => [k, r.contact[k] || ""]))); setDirty(false);
-      document.title = `${r.contact.name || r.contact.company || r.contact.email || r.contact.phone || "Contact"} · Reachout`;
+      document.title = `${r.contact.name || r.contact.company || r.contact.email || r.contact.phone || "Contact"} · Inkwell`;
     } catch (e) { if (e.status === 404) setMissing(true); else { fail(e); go("contacts"); } }
   }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { load(); }, [load]);

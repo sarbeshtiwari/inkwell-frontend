@@ -1,4 +1,4 @@
-// Reachout Autofill: runs in the application page only when you click "Fill this application".
+// Inkwell Autofill: runs in the application page only when you click "Fill this application".
 // It fills fields with your details, resume and approved answers, outlines what it filled (green), drafts (amber)
 // and what still needs you (red). It never presses Submit: you check the form and submit it yourself.
 (() => {
@@ -9,7 +9,7 @@
   const sleep = ms => new Promise(r => setTimeout(r, ms));
   const shown = e => !!(e && (e.offsetWidth || e.offsetHeight || e.getClientRects().length));
   const api = msg => new Promise((resolve, reject) =>
-    chrome.runtime.sendMessage({ type: "reachout-api", ...msg }, r => (r && r.ok ? resolve(r.data) : reject(new Error(r ? r.error : "Reachout isn't reachable.")))));
+    chrome.runtime.sendMessage({ type: "reachout-api", ...msg }, r => (r && r.ok ? resolve(r.data) : reject(new Error(r ? r.error : "Inkwell isn't reachable.")))));
 
   function labelOf(e) {
     if (e.labels && e.labels[0] && clean(e.labels[0].innerText)) return clean(e.labels[0].innerText);
@@ -129,7 +129,7 @@
       el.onclick = () => el.remove();
       document.documentElement.appendChild(el);
     }
-    el.textContent = "✦ Reachout · " + text;
+    el.textContent = "✦ Inkwell · " + text;
   }
 
   async function fill({ drafts }) {
@@ -249,7 +249,7 @@
   async function learn() {
     const pairs = snapshot();
     const r = await api({ path: "/api/ext/learn", method: "POST", body: { url: location.href, title: document.title, pairs } });
-    bar(`Saved ${r.saved} of your answers to Reachout. Approve them in AI job match → My answers.`);
+    bar(`Saved ${r.saved} of your answers to Inkwell. Approve them in AI job match → My answers.`);
     return r;
   }
 

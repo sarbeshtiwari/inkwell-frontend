@@ -38,7 +38,7 @@ export default function LinkedIn({ route }) {
       <motion.div className="card card-pad connect-card" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
         <motion.div className="connect-ic li" initial={{ scale: .5 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 260, damping: 14 }}><Icon name="linkedin" /></motion.div>
         <h3>{s.expired ? "Your LinkedIn sign-in expired" : "Connect your LinkedIn account"}</h3>
-        <p className="help">You'll sign in on LinkedIn's own page. Reachout gets permission to see your name, photo and email, and to publish posts you write here. It can't read your messages or change your profile.</p>
+        <p className="help">You'll sign in on LinkedIn's own page. Inkwell gets permission to see your name, photo and email, and to publish posts you write here. It can't read your messages or change your profile.</p>
         <a className="btn btn-primary btn-lg" href="/api/li/connect" style={{ marginTop: 16 }}><Icon name="linkedin" />Continue with LinkedIn</a>
       </motion.div>
       {links}
@@ -63,10 +63,10 @@ export default function LinkedIn({ route }) {
           </div>)}
       </div>
       <div className="col">
-        <div className="card"><div className="card-head"><h3>Posted from Reachout</h3><span className="grow" /><a className="btn btn-sm btn-ghost" href="/app/posts">Scheduled</a></div>
+        <div className="card"><div className="card-head"><h3>Posted from Inkwell</h3><span className="grow" /><a className="btn btn-sm btn-ghost" href="/app/posts">Scheduled</a></div>
           {s.posts.length ? s.posts.map((x, i) => <motion.div key={i} className="li-post" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * .04 }}>
             <p>{x.text.slice(0, 280)}{x.text.length > 280 && "…"}</p><span className="help">{ago(x.at)} · {x.visibility === "PUBLIC" ? "Anyone" : "Connections"}{x.url && <> · <a href={x.url} target="_blank" rel="noopener noreferrer">View on LinkedIn</a></>}</span></motion.div>)
-            : <Empty icon="linkedin" title="No posts yet">Posts you publish from Reachout appear here.</Empty>}
+            : <Empty icon="linkedin" title="No posts yet">Posts you publish from Inkwell appear here.</Empty>}
         </div>
         {links}
       </div>

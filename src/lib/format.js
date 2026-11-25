@@ -36,7 +36,7 @@ export const gmailLink = id => `https://mail.google.com/mail/u/0/#search/${encod
 export const splitCsv = v => (v || "").split(/[,\n]/).map(x => x.trim()).filter(Boolean);
 
 // Links built from data (emails, GitHub, user input) only ever open web pages or mail/phone apps.
-// A javascript: or data: link would run code inside Reachout, so anything else becomes undefined (no link).
+// A javascript: or data: link would run code inside Inkwell, so anything else becomes undefined (no link).
 export const safeHref = (u, { mail = false } = {}) => {
   const s = String(u || "").trim();
   if (/^https?:\/\/[^\s"'<>]+$/i.test(s)) return s;

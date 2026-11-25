@@ -26,8 +26,8 @@ const TIER = { "High Confidence": "ok", "Proceed with Caution": "warn", Suspicio
 const KEYLESS = ["career_sites", "remote_boards"];
 
 const MODE_LABEL = { board: "Auto-apply ready", site: "Auto-apply on company site", account: "Watch mode: needs your sign-in" };
-const MODE_HINT = { site: "Reachout finds the application form on the company's own site and fills it; it hands back anything only you can do.",
-  account: "This site makes you sign in first. With Watch mode on, you sign in in the window and Reachout fills the rest." };
+const MODE_HINT = { site: "Inkwell finds the application form on the company's own site and fills it; it hands back anything only you can do.",
+  account: "This site makes you sign in first. With Watch mode on, you sign in in the window and Inkwell fills the rest." };
 const APPLY = { applied: ["Applied", "ok"], needs_you: ["Needs you", "warn"], closed: ["Closed", ""], ready: ["Ready", "brand"], with_you: ["Open on your screen", "brand"], blocked: ["Apply in your browser", "warn"] };
 
 export default function AIJobs() {
@@ -116,8 +116,8 @@ export default function AIJobs() {
     const ids = [...picked];
     if (!anyway && !await modal({ title: `Apply to ${ids.length} job${ids.length === 1 ? "" : "s"}?`, confirm: "Apply now",
       text: watchWindow && d.can_hand_over
-        ? "A browser window opens and each job gets its own tab: Reachout AI fills the form and submits it. Where you're needed (signing in, creating an account, a question only you can answer, a CAPTCHA) it pauses with a bar at the bottom of the page; do that part, then press Continue."
-        : "Reachout AI fills each public application form with your resume and details and submits it. Forms with questions only you can answer, or a CAPTCHA, are handed back to you. You can watch it live on this page." })) return;
+        ? "A browser window opens and each job gets its own tab: Inkwell AI fills the form and submits it. Where you're needed (signing in, creating an account, a question only you can answer, a CAPTCHA) it pauses with a bar at the bottom of the page; do that part, then press Continue."
+        : "Inkwell AI fills each public application form with your resume and details and submits it. Forms with questions only you can answer, or a CAPTCHA, are handed back to you. You can watch it live on this page." })) return;
     setBusy("apply");
     try { await api("/api/ai-jobs/apply", { json: { ids, watch: watchWindow, anyway } }); setPicked(new Set()); toast("Applying… watch it live below."); load(); }
     catch (x) {
@@ -143,8 +143,8 @@ export default function AIJobs() {
       <div className="ai-hero card">
         <div className="ai-hero-glow" aria-hidden="true" />
         <div className="ai-hero-head">
-          <span className="ai-chip"><Icon name="sparkles" />Reachout AI</span>
-          <span className="help">{d?.local_model ? `Matching engine + ${d.model_name}` : "Reachout's own matching engine · no outside AI"}</span>
+          <span className="ai-chip"><Icon name="sparkles" />Inkwell AI</span>
+          <span className="help">{d?.local_model ? `Matching engine + ${d.model_name}` : "Inkwell's own matching engine · no outside AI"}</span>
         </div>
         <h2>What job are you looking for?</h2>
         <div className="ai-form">

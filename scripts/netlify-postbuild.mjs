@@ -14,12 +14,12 @@ const out = join(here, "..", "netlify-dist");
 
 const tpl = readFileSync(join(out, "index.html"), "utf8");
 const page = (title, robots) => tpl.replaceAll("{{TITLE}}", title).replaceAll("{{ROBOTS}}", robots);
-writeFileSync(join(out, "index.html"), page("Reachout", "noindex, nofollow"));
-writeFileSync(join(out, "login.html"), page("Log in · Reachout", "noindex, follow"));
-writeFileSync(join(out, "signup.html"), page("Create a free account · Reachout", "index, follow"));
+writeFileSync(join(out, "index.html"), page("Inkwell", "noindex, nofollow"));
+writeFileSync(join(out, "login.html"), page("Log in · Inkwell", "noindex, follow"));
+writeFileSync(join(out, "signup.html"), page("Create a free account · Inkwell", "index, follow"));
 
 writeFileSync(join(out, "site.webmanifest"), JSON.stringify({
-  name: "Reachout", short_name: "Reachout", start_url: "/app", display: "standalone", background_color: "#fbfaf7", theme_color: "#0f6b54",
+  name: "Inkwell", short_name: "Inkwell", start_url: "/app", display: "standalone", background_color: "#fbfaf7", theme_color: "#0f6b54",
   icons: [{ src: "/assets/icon-192.png", sizes: "192x192", type: "image/png" }, { src: "/assets/icon-512.png", sizes: "512x512", type: "image/png" }],
 }));
 

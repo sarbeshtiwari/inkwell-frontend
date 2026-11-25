@@ -1,8 +1,8 @@
-# Reachout app (frontend)
+# Inkwell app (frontend)
 
-The React app where people use Reachout: `/app` (the workspace), `/login` and `/signup`.
+The React app where people use Inkwell: `/app` (the workspace), `/login` and `/signup`.
 
-Reachout brings outreach and the job search into one place. Users send personal email (and optionally WhatsApp)
+Inkwell brings outreach and the job search into one place. Users send personal email (and optionally WhatsApp)
 messages from their own accounts, see who replied and what they want, track every job application from their
 inbox, get job matches, and build and publish their own one-page website.
 
@@ -43,7 +43,7 @@ index.html                 Page shell (title/robots placeholders filled at build
 public/                    Copied as-is: icons, sw.js (push notifications service worker)
 scripts/netlify-postbuild.mjs  Turns the build into a Netlify site: login/signup pages, _headers (CSP), _redirects
 netlify.toml               Netlify build + signed proxy rules to the backend
-extension/                 Reachout Autofill Chrome extension (zipped into public/downloads/)
+extension/                 Inkwell Autofill Chrome extension (zipped into public/downloads/)
 src/
   main.jsx                 Entry: loads saved preferences, picks Auth or App, reports browser errors
   App.jsx                  Page registry (lazy-loaded), titles, page transitions

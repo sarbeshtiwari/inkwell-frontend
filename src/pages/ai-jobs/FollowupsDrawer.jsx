@@ -28,7 +28,7 @@ export function FollowupsDrawer({ open, onClose, onChanged }) {
   const copy = async text => { try { await navigator.clipboard.writeText(text); toast("Copied"); } catch { toast("Couldn't copy. Select the text and copy it.", true); } };
   return (
     <Drawer open={open} onClose={onClose} label="Follow-ups" wide>
-      <DrawerHead title="Follow-ups" sub="Who to nudge today, with a draft. Reachout never sends these: you send them yourself." onClose={onClose} />
+      <DrawerHead title="Follow-ups" sub="Who to nudge today, with a draft. Inkwell never sends these: you send them yourself." onClose={onClose} />
       <div className="dr-pad ai-drawer">
         {!rows ? <p className="help">Loading…</p> : !rows.length ? (
           <Empty icon="check" title="Nothing due">Applications are followed up after a week (twice at most), replies within a day, and interviews get a thank-you the next day.</Empty>

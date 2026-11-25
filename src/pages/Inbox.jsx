@@ -21,7 +21,7 @@ export default function Inbox({ route }) {
   const load = useCallback(() => api(`/api/inbox?months=${months}`).then(r => { setD(r); setErr(""); }).catch(e => setErr(e.message)), [months]);
   useEffect(() => { load(); return on("sync-done", load); }, [load]);
 
-  const catOf = k => d?.categories[k] || { label: k, color: "#cbd5e1" };
+  const catOf = k => d?.categories[k] || { label: k, color: "#ddd5c7" };
   const rows = useMemo(() => {
     if (!d) return [];
     let r = d.companies.filter(c => !c.hidden);
@@ -122,7 +122,7 @@ function CompanyDetail({ k, cats, summary, onChanged }) {
   useEffect(() => { setD(null); api(`/api/inbox/company/${k}`).then(setD).catch(e => setErr(e.message)); }, [k]);
   if (err) return <div className="dr-pad"><Empty icon="alert" title="Couldn't open this company">{err}</Empty></div>;
   if (!d) return <div className="dr-pad"><Sk w="60%" h={22} /><div className="sk-block card" style={{ marginTop: 20 }} /></div>;
-  const catOf = x => cats[x] || { label: x, color: "#cbd5e1" };
+  const catOf = x => cats[x] || { label: x, color: "#ddd5c7" };
   const counts = {}; d.items.forEach(i => counts[i.cat] = (counts[i.cat] || 0) + 1);
   const rename = async () => {
     const name = (await modal({ title: "Rename company", text: "Use this if an email system's name shows up instead of the company.", input: d.name, confirm: "Save" }) || "").trim();

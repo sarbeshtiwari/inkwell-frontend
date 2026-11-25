@@ -7,6 +7,8 @@ import { applyTheme } from "./lib/theme";
 import "./styles/base.css";
 import "./styles/app.css";
 import "./styles/pages.css";
+import "./styles/notebook.css";
+import { startInkCursor } from "./lib/cursor";
 
 // One bundle serves /app (the workspace) and /login, /signup (the sign-in screens).
 const isAuth = /^\/(login|signup)\/?$/.test(location.pathname);
@@ -24,6 +26,7 @@ function report(message, stack) {
 addEventListener("error", e => report(e.message, e.error?.stack));
 addEventListener("unhandledrejection", e => { if (e.reason?.name !== "ApiError") report(e.reason?.message || e.reason, e.reason?.stack); });
 const root = document.documentElement;
+startInkCursor();
 
 // Served by Flask, the page arrives with the saved look (theme, sidebar) and the sign-in redirects already
 // applied. Served as static files (Netlify), the page asks the API for both before the first render.

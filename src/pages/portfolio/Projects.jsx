@@ -64,7 +64,7 @@ export function Projects() {
 
       {!items.length ? (
         <div className="card"><Empty icon="star" title="No projects yet" action={<Button variant="primary" icon="plus" onClick={() => setAdding(true)}>Pick projects from GitHub</Button>}>
-          Choose which of your repositories to show on your website. Reachout finds each one's live link and makes a preview.</Empty></div>
+          Choose which of your repositories to show on your website. Inkwell finds each one's live link and makes a preview.</Empty></div>
       ) : view === "manage" ? (
         <>
           <p className="help pf-tip"><Icon name="menu" /> Drag to set the order they appear on your site.</p>

@@ -1,4 +1,4 @@
-# Netlify site 2: the Reachout app (/app, /login, /signup). Base directory on Netlify: (empty)
+# Netlify site 2: the Inkwell app (/app, /login, /signup). Base directory on Netlify: (empty)
 #
 # Backend: https://reachout-backend-1uyl.onrender.com   Landing site: https://reachout-web.netlify.app
 # ▶ In Netlify → Site configuration → Environment variables, add NETLIFY_PROXY_SECRET

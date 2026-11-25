@@ -37,7 +37,7 @@ export function Repos({ status, onDisconnect }) {
     return base.filter(fn).sort(by);
   }, [base, own, sort]); // eslint-disable-line react-hooks/exhaustive-deps
   const pg = usePager(rows, [own, vis, lang, sort, archived, dq].join("|"), 24);
-  const disconnect = async () => { if (!await modal({ title: "Disconnect GitHub?", text: "Reachout will forget your token. Your repositories aren't affected.", confirm: "Disconnect", danger: true })) return; await api("/api/gh/disconnect", { json: {} }).catch(fail); onDisconnect(); };
+  const disconnect = async () => { if (!await modal({ title: "Disconnect GitHub?", text: "Inkwell will forget your token. Your repositories aren't affected.", confirm: "Disconnect", danger: true })) return; await api("/api/gh/disconnect", { json: {} }).catch(fail); onDisconnect(); };
   const filtered = vis || lang || archived || dq;
   return (
     <div ref={top}>

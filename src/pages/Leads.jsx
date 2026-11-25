@@ -41,7 +41,7 @@ export default function Leads({ route }) {
   const week = Date.now() / 1000 - 7 * 86400;
   return (
     <div>
-      {d?.is_admin && <div className="toolbar"><Seg value={scope} onChange={setScope} name="Whose enquiries" options={[["mine", "My website", "globe"], ["site", "Reachout site", "shield", d.site_new || undefined]]} /></div>}
+      {d?.is_admin && <div className="toolbar"><Seg value={scope} onChange={setScope} name="Whose enquiries" options={[["mine", "My website", "globe"], ["site", "Inkwell site", "shield", d.site_new || undefined]]} /></div>}
       {d && <div className="kpis four">
         <Kpi index={0} icon="inbox" tone="brand" label="New" value={all.filter(l => l.status === "new").length} />
         <Kpi index={1} icon="calendar" label="This week" value={all.filter(l => l.created > week).length} />
@@ -68,7 +68,7 @@ export default function Leads({ route }) {
                 <td><div>{l.topic}</div><div className="help clip">{l.message}</div></td>
                 <td><Badge tone={TONE[l.status]}>{d.statuses[l.status] || l.status}</Badge></td>
               </tr>))}
-            {d && !rows.length && <tr><td colSpan={4}><Empty icon="inbox" title={all.length ? "No enquiries match" : "No enquiries yet"}>{all.length ? "" : scope === "site" ? "Enquiries from Reachout's own contact page and pop-up land here." : <>When someone uses the contact form on your website, it lands here. <a href="/app/portfolio/website">Build or edit your website</a></>}</Empty></td></tr>}
+            {d && !rows.length && <tr><td colSpan={4}><Empty icon="inbox" title={all.length ? "No enquiries match" : "No enquiries yet"}>{all.length ? "" : scope === "site" ? "Enquiries from Inkwell's own contact page and pop-up land here." : <>When someone uses the contact form on your website, it lands here. <a href="/app/portfolio/website">Build or edit your website</a></>}</Empty></td></tr>}
           </tbody></table></div><Pager p={pg} label="enquiries" /></div>
         <AnimatePresence mode="wait">
           {lead ? <motion.aside key={lead.id} className="card lead-detail" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 16 }}>

@@ -53,7 +53,7 @@ export default function Replies({ route }) {
         <AnimatePresence initial={false}>
           {pg.items.map((r, i) => <ReplyCard key={r.id} r={r} labels={d.labels} i={i} onCompose={() => setCompose(r.id)} onMark={mark} />)}
         </AnimatePresence>
-        {d && !d.items.length && <div className="card"><Empty icon="reply" title={f === "open" ? "Nothing waiting for you" : "No replies here yet"}>When someone answers an email you sent from Reachout, it shows up here within a few minutes, with a notification.</Empty></div>}
+        {d && !d.items.length && <div className="card"><Empty icon="reply" title={f === "open" ? "Nothing waiting for you" : "No replies here yet"}>When someone answers an email you sent from Inkwell, it shows up here within a few minutes, with a notification.</Empty></div>}
       </div>
       {pg.total > 0 && <div className="card" style={{ marginTop: 14 }}><Pager p={pg} label="replies" sizes={[5, 10, 25]} /></div>}
       <Drawer open={!!compose} onClose={() => setCompose(null)} wide label="Reply">

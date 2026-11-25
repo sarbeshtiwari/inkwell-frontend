@@ -87,7 +87,7 @@ export default function Finder() {
       <div className="grid-2 finder-top">
         <div className="card card-pad">
           <h3 className="sec-h"><Icon name="search" />Websites to search</h3>
-          <p className="help" style={{ marginTop: -6, marginBottom: 14 }}>Reachout opens each website's pages (careers, contact and about first) and lists the HR and careers email addresses it publishes.</p>
+          <p className="help" style={{ marginTop: -6, marginBottom: 14 }}>Inkwell opens each website's pages (careers, contact and about first) and lists the HR and careers email addresses it publishes.</p>
           {rows.map((r, i) => (
             <div className="finder-row" key={i}>
               <Field label={i === 0 ? "Company" : ""} opt={i === 0 ? "(optional)" : ""}>

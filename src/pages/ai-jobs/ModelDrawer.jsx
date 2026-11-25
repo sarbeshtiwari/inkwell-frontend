@@ -33,14 +33,14 @@ export function ModelDrawer({ open, onClose, onSaved }) {
     <Drawer open={open} onClose={onClose} label="AI model">
       <DrawerHead title="AI model" sub="Which AI writes verdicts, reports, cover letters, tailored resumes and prep. Matching itself needs none." onClose={onClose} />
       {d && <div className="dr-pad ai-drawer">
-        {d.ready ? <Alert tone="ok" icon="check">In use: <b>{d.label}</b></Alert> : <Alert tone="warn">No model is ready, so reports use Reachout's plain versions.</Alert>}
+        {d.ready ? <Alert tone="ok" icon="check">In use: <b>{d.label}</b></Alert> : <Alert tone="warn">No model is ready, so reports use Inkwell's plain versions.</Alert>}
         <Field label="Provider">
           <select className="select" value={f.provider} onChange={e => { setF(x => ({ ...x, provider: e.target.value, model: "", key: "" })); setNames([]); }}>
             {d.providers.map(x => <option key={x.id} value={x.id}>{x.label}{d.keys[x.id] ? " ✓" : ""}</option>)}
           </select>
         </Field>
         {f.provider === "claude_cli" || f.provider === "kiro_cli" ? <>
-          <Alert tone="info" icon="sparkles">Uses the {f.provider === "claude_cli" ? "Claude Code" : "Kiro"} login on this Mac, so it counts against your own plan's usage. Your resume and the job text go to {f.provider === "claude_cli" ? "Anthropic" : "Kiro"} under your account. On the hosted Reachout it falls back to Ollama.</Alert>
+          <Alert tone="info" icon="sparkles">Uses the {f.provider === "claude_cli" ? "Claude Code" : "Kiro"} login on this Mac, so it counts against your own plan's usage. Your resume and the job text go to {f.provider === "claude_cli" ? "Anthropic" : "Kiro"} under your account. On the hosted Inkwell it falls back to Ollama.</Alert>
           <Field label="Model" opt="(optional)" hint={f.provider === "claude_cli" ? "Leave empty for Claude Code's default, or pick sonnet, opus or haiku." : "Leave empty for Kiro's default."}>
             <input className="input" list="ai-model-names" value={f.model} onChange={e => setF(x => ({ ...x, model: e.target.value }))} placeholder="default" />
             <datalist id="ai-model-names">{(f.provider === "claude_cli" ? ["sonnet", "opus", "haiku"] : []).map(n => <option key={n} value={n} />)}</datalist>

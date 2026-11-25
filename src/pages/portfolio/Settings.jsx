@@ -22,7 +22,7 @@ export function Settings({ d, onSaved, onClose }) {
     <DrawerHead logo={<span className="co-logo lg grad"><Icon name="settings" /></span>} title="Website settings" onClose={onClose} />
     <form className="dr-pad" onSubmit={save} noValidate>
       <h4 className="dr-sub" style={{ marginTop: 0 }}>Publish to your website repo</h4>
-      <p className="help">Reachout commits a <code>projects.json</code> file to the repo your site is built from. Vercel, Netlify or GitHub Pages then redeploys it.</p>
+      <p className="help">Inkwell commits a <code>projects.json</code> file to the repo your site is built from. Vercel, Netlify or GitHub Pages then redeploys it.</p>
       <Field label="Website repository" error={errors.repo} style={{ marginTop: 12 }}>
         <select className="select" value={full} onChange={e => { const [o, r] = e.target.value.split("/"); setV(x => ({ ...x, target: { ...x.target, owner: o || "", repo: r || "" } })); }}>
           <option value="">Choose a repository…</option>
@@ -44,7 +44,7 @@ export function Settings({ d, onSaved, onClose }) {
         <input className="input" value={v.slug} onChange={e => setV(x => ({ ...x, slug: e.target.value.toLowerCase() }))} /></Field>
       <Field label="Headline" style={{ marginTop: 12 }}><input className="input" value={v.headline} maxLength={120} placeholder="AI/ML & Full Stack Engineer" onChange={e => setV(x => ({ ...x, headline: e.target.value }))} /></Field>
       <Field label="About" opt="(optional)" style={{ marginTop: 12 }}><textarea className="textarea" rows={3} maxLength={1000} value={v.about} onChange={e => setV(x => ({ ...x, about: e.target.value }))} /></Field>
-      {v.public && !location.origin.startsWith("https") && <Alert tone="warn" style={{ marginTop: 12 }}>This computer's address isn't reachable from the internet. The public page works once Reachout is online; publishing to your repo works now.</Alert>}
+      {v.public && !location.origin.startsWith("https") && <Alert tone="warn" style={{ marginTop: 12 }}>This computer's address isn't reachable from the internet. The public page works once Inkwell is online; publishing to your repo works now.</Alert>}
       <div className="form-actions sticky-actions"><Button onClick={onClose}>Cancel</Button><span className="grow" /><Button type="submit" variant="primary" busy={busy} busyLabel="Saving…">Save settings</Button></div>
     </form>
   </>;

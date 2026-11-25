@@ -11,7 +11,7 @@ export function AnswersDrawer({ open, onClose, answers, reload }) {
   useEffect(() => { if (open) { setDraft({ question: open.question || "", answer: "", company: open.company || "" }); setErr({}); setEdits({}); if (open.question) setTab("all"); } }, [open]);
   const add = async () => {
     setBusy("add");
-    try { await api("/api/ai-jobs/answers", { json: draft }); setDraft({ question: "", answer: "", company: "" }); toast("Answer saved. Reachout AI will use it on matching questions."); reload(); }
+    try { await api("/api/ai-jobs/answers", { json: draft }); setDraft({ question: "", answer: "", company: "" }); toast("Answer saved. Inkwell AI will use it on matching questions."); reload(); }
     catch (e) { e.field ? setErr({ [e.field]: e.message }) : fail(e); }
     setBusy("");
   };
@@ -29,7 +29,7 @@ export function AnswersDrawer({ open, onClose, answers, reload }) {
   const setEd = (a, k, v) => setEdits(x => ({ ...x, [a.id]: { ...(x[a.id] || {}), [k]: v } }));
   return (
     <Drawer open={!!open} onClose={onClose} label="My answers" wide>
-      <DrawerHead title="My answers" sub="Answers Reachout AI uses on application forms. It learns from forms you fill in; you approve what it keeps." onClose={onClose} />
+      <DrawerHead title="My answers" sub="Answers Inkwell AI uses on application forms. It learns from forms you fill in; you approve what it keeps." onClose={onClose} />
       <div className="dr-pad ai-drawer">
         <div className="ai-answer-new card card-pad">
           <b>Add an answer</b>
@@ -52,7 +52,7 @@ export function AnswersDrawer({ open, onClose, answers, reload }) {
             <div className="ai-answer-head">
               {a.status === "review" ? <Badge tone="warn">To review</Badge> : <Badge tone="ok">Used in forms</Badge>}
               {a.company && <Badge dot={false}>Only {a.company}</Badge>}
-              <span className="help">{a.source === "learned" ? `Learned from ${a.learned_from}` : a.source === "draft" ? "Draft by Reachout AI: check it's true for you" : "Added by you"}</span>
+              <span className="help">{a.source === "learned" ? `Learned from ${a.learned_from}` : a.source === "draft" ? "Draft by Inkwell AI: check it's true for you" : "Added by you"}</span>
             </div>
             <input className="input ai-answer-q" value={ed(a, "question")} onChange={e => setEd(a, "question", e.target.value)} aria-label="Question" />
             <textarea className="input" rows={Math.min(8, Math.max(2, Math.ceil(ed(a, "answer").length / 80)))} value={ed(a, "answer")} onChange={e => setEd(a, "answer", e.target.value)} aria-label="Answer" />

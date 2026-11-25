@@ -11,7 +11,7 @@ async function show() {
 
 $("save").onclick = async () => {
   const key = $("key").value.trim(), server = $("server").value;
-  if (!/^[0-9a-f]{32}\.[\w-]{30,80}$/.test(key)) { $("setupMsg").textContent = "That doesn't look like a Reachout extension key."; return; }
+  if (!/^[0-9a-f]{32}\.[\w-]{30,80}$/.test(key)) { $("setupMsg").textContent = "That doesn't look like a Inkwell extension key."; return; }
   await chrome.storage.local.set({ key, server });
   $("setupMsg").textContent = "";
   $("key").value = "";
@@ -49,7 +49,7 @@ $("learn").onclick = async () => {
   out.hidden = false;
   try {
     const r = await inPage("learn");
-    out.innerHTML = `<div class="ok">Saved ${r.saved} answer${r.saved === 1 ? "" : "s"} to Reachout.</div><div>Approve them in AI job match → My answers.</div>`;
+    out.innerHTML = `<div class="ok">Saved ${r.saved} answer${r.saved === 1 ? "" : "s"} to Inkwell.</div><div>Approve them in AI job match → My answers.</div>`;
   } catch (e) { out.innerHTML = `<div class="bad">${esc(e.message)}</div>`; }
 };
 

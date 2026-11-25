@@ -1,4 +1,4 @@
-// A small Markdown-to-HTML renderer for Reachout's own course text: everything is escaped first, then only
+// A small Markdown-to-HTML renderer for Inkwell's own course text: everything is escaped first, then only
 // headings, lists, code, bold/italic and https links are turned into tags. Diagrams (mermaid) show as code.
 const esc = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 

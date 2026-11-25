@@ -39,13 +39,13 @@ export function LearningDrawer({ open, onClose, onChanged }) {
       toast(accept ? "Added to your rules." : "Won't suggest that again."); onChanged?.(); } catch (e) { fail(e); }
   };
   const reset = async () => {
-    if (!await modal({ title: "Forget what Reachout learned?", text: "Your Good fit / Not for me feedback is cleared and matches are ranked without it. Your rules and statuses stay.", confirm: "Forget it", danger: true })) return;
+    if (!await modal({ title: "Forget what Inkwell learned?", text: "Your Good fit / Not for me feedback is cleared and matches are ranked without it. Your rules and statuses stay.", confirm: "Forget it", danger: true })) return;
     try { const r = await api("/api/ai-jobs/learning/reset", { json: {} }); setD(x => ({ ...x, ...r.learning, given: {} })); onChanged?.(); } catch (e) { fail(e); }
   };
   const cal = d?.calibration;
   return (
-    <Drawer open={open} onClose={onClose} label="What Reachout learned">
-      <DrawerHead title="What Reachout learned" sub="From your Good fit / Not for me, the jobs you apply to and what happens next. It nudges each match by up to 15 points and says why." onClose={onClose} />
+    <Drawer open={open} onClose={onClose} label="What Inkwell learned">
+      <DrawerHead title="What Inkwell learned" sub="From your Good fit / Not for me, the jobs you apply to and what happens next. It nudges each match by up to 15 points and says why." onClose={onClose} />
       {d && <div className="dr-pad ai-drawer">
         {!d.active ? <Alert tone="info">It starts learning after {d.needed} jobs with feedback or an outcome ({d.lessons} so far). Mark matches Good fit or Not for me, or set their status.</Alert>
           : <Alert tone="ok" icon="check">Learning from {d.lessons} jobs. New matches are ranked with it.</Alert>}

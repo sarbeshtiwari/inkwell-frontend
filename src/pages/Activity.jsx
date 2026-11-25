@@ -94,7 +94,7 @@ export default function Activity() {
         <div className="card-head"><h3>Sent per day</h3><span className="grow" /><span className="legend"><i className="l-ok" />Delivered<i className="l-bad" />Failed</span></div>
         <div className="chart-box short"><Bar data={{ labels: chart.labels, datasets: [
           { label: "Delivered", data: chart.sent, backgroundColor: t.accent, borderRadius: 5, maxBarThickness: 22, stack: "s" },
-          { label: "Failed", data: chart.failed, backgroundColor: "#f87171", borderRadius: 5, maxBarThickness: 22, stack: "s" }] }}
+          { label: "Failed", data: chart.failed, backgroundColor: "#e89bae", borderRadius: 5, maxBarThickness: 22, stack: "s" }] }}
           options={{ plugins: { legend: { display: false } }, interaction: { mode: "index", intersect: false }, scales: { x: { stacked: true, grid: { display: false }, ticks: { maxTicksLimit: 10, maxRotation: 0 } }, y: { stacked: true, beginAtZero: true, ticks: { precision: 0 }, grid: t.grid } } }} /></div>
       </motion.div>}
 

@@ -109,7 +109,7 @@ export function MailSyncCard() {
       <div className="ms-head"><h3 className="sec-h" style={{ margin: 0 }}><Icon name="refresh" />Mail sync</h3><span className="grow" />
         {d.email_ready ? <Badge tone={d.last_error ? "warn" : d.last_ok ? "ok" : ""}>{d.running ? "Syncing" : d.last_ok ? `Synced ${ago(d.last_ok)}` : "Not synced yet"}</Badge> : <Badge dot={false}>Gmail not connected</Badge>}
       </div>
-      <p className="help" style={{ margin: "6px 0 14px" }}>One sync reads your Gmail for everything in Reachout. It only reads: nothing is moved, labelled or marked as read.</p>
+      <p className="help" style={{ margin: "6px 0 14px" }}>One sync reads your Gmail for everything in Inkwell. It only reads: nothing is moved, labelled or marked as read.</p>
       <ul className="ms-parts">{parts.map(([ic, b, t], i) => (
         <motion.li key={b} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * .05 }}>
           <span className={`ms-part-ic ${d.running && pr?.step === i ? "active" : pr && pr.step > i && d.running ? "done" : ""}`}><Icon name={d.running && pr && pr.step > i ? "check" : ic} /></span><span><b>{b}</b> {t}</span>
@@ -118,7 +118,7 @@ export function MailSyncCard() {
       <AnimatePresence mode="wait">
         {d.running ? (
           <motion.div key="run" className="sync-run" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}>
-            <Spinner /><div className="grow"><b>{pr?.stage || "Starting"}…</b><span className="help">Step {(pr?.step ?? 0) + 1} of {pr?.steps || 5}{pr?.full ? " · full rescan, this takes a few minutes" : ""}. You can keep using Reachout.</span>
+            <Spinner /><div className="grow"><b>{pr?.stage || "Starting"}…</b><span className="help">Step {(pr?.step ?? 0) + 1} of {pr?.steps || 5}{pr?.full ? " · full rescan, this takes a few minutes" : ""}. You can keep using Inkwell.</span>
               <div className="progress"><motion.div animate={{ width: `${pct}%` }} transition={{ duration: .5 }} /></div></div>
           </motion.div>
         ) : d.email_ready ? (
@@ -135,7 +135,7 @@ export function MailSyncCard() {
         {d.email_ready && d.first_done && !d.running && <Button variant="ghost" size="sm" onClick={async () => { if (await modal({ title: "Read the whole mailbox again?", text: "Takes a few minutes. Your edits to applications and renamed companies are kept.", confirm: "Rescan" })) startSync(true); }}>Full rescan</Button>}
         <Button variant="primary" size="sm" icon="refresh" disabled={!d.email_ready || d.running} onClick={() => startSync(false)}>{d.first_done ? "Sync now" : "Sync my mailbox"}</Button>
       </div>
-      <p className="help" style={{ marginTop: 10 }}>Replies are also checked every few minutes on their own. If Reachout wasn't running at the daily time, it syncs as soon as it starts.</p>
+      <p className="help" style={{ marginTop: 10 }}>Replies are also checked every few minutes on their own. If Inkwell wasn't running at the daily time, it syncs as soon as it starts.</p>
     </div>
   );
 }

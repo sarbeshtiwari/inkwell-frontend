@@ -13,7 +13,7 @@ export function SentPanel({ onClose }) {
   const [picked, setPicked] = useState(new Set());
   const [filter, setFilter] = useState("");
   const [mark, setMark] = useState(false);
-  const [err, setErr] = useState(app.data.profile.has_password ? "" : "Set up email on the Profile page first. Reachout uses the same app password to read your Sent folder.");
+  const [err, setErr] = useState(app.data.profile.has_password ? "" : "Set up email on the Profile page first. Inkwell uses the same app password to read your Sent folder.");
   const [busy, setBusy] = useState("");
   const vis = (items || []).filter(x => !filter || [x.email, x.name, x.company, x.last_subject].some(v => (v || "").toLowerCase().includes(filter.toLowerCase())));
   const pickable = vis.filter(x => !x.imported);
@@ -37,7 +37,7 @@ export function SentPanel({ onClose }) {
   return (
     <div className="card card-pad panel">
       <h3 className="sec-h" style={{ marginBottom: 4 }}>Import people you've already emailed</h3>
-      <p className="help">Reachout looks at your mailbox's <b>Sent</b> folder and reads only who you wrote to, when, and the subject line. Personal addresses (gmail.com, yahoo.com…) are skipped.</p>
+      <p className="help">Inkwell looks at your mailbox's <b>Sent</b> folder and reads only who you wrote to, when, and the subject line. Personal addresses (gmail.com, yahoo.com…) are skipped.</p>
       <div className="form-actions" style={{ marginTop: 12 }}>
         <select className="select auto" value={days} onChange={e => setDays(e.target.value)} aria-label="Look back"><option value="0">All time</option><option value="30">Last 30 days</option><option value="90">Last 3 months</option><option value="180">Last 6 months</option><option value="365">Last 12 months</option></select>
         <Button variant="primary" icon="search" busy={busy === "scan"} busyLabel="Scanning…" onClick={scan} disabled={!app.data.profile.has_password}>Scan Sent folder</Button>

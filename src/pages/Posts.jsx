@@ -48,9 +48,9 @@ export default function Posts({ route }) {
         </motion.div>}</AnimatePresence>
         <details className="card card-pad">
           <summary><b>Bookmarklet: send a post here from LinkedIn</b></summary>
-          <p className="help" style={{ marginTop: 8 }}>Drag this button to your browser's bookmarks bar. On LinkedIn, select the text of a post, then click the bookmark: Reachout opens with the post filled in.</p>
+          <p className="help" style={{ marginTop: 8 }}>Drag this button to your browser's bookmarks bar. On LinkedIn, select the text of a post, then click the bookmark: Inkwell opens with the post filled in.</p>
           <a className="btn" style={{ marginTop: 10 }} draggable onClick={e => { e.preventDefault(); toast("Drag this button to your bookmarks bar, then use it on LinkedIn."); }}
-            href={`javascript:(()=>{const t=String(getSelection()||'').trim();if(t.length<20){alert('Select the text of the post first, then click this bookmark.');return}window.open('${location.origin}/app#posts?u='+encodeURIComponent(location.href)+'&t='+encodeURIComponent(t.slice(0,6000)),'_blank')})()`}>➜ Send to Reachout</a>
+            href={`javascript:(()=>{const t=String(getSelection()||'').trim();if(t.length<20){alert('Select the text of the post first, then click this bookmark.');return}window.open('${location.origin}/app#posts?u='+encodeURIComponent(location.href)+'&t='+encodeURIComponent(t.slice(0,6000)),'_blank')})()`}>➜ Send to Inkwell</a>
         </details>
       </div>
       <div className="col">

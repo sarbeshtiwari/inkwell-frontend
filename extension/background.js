@@ -1,5 +1,5 @@
-// Talks to Reachout for the page script. Requests go from here (the extension), never from the job site's page,
-// so the site never sees your Reachout address or key. The key is kept in chrome.storage.local on this computer.
+// Talks to Inkwell for the page script. Requests go from here (the extension), never from the job site's page,
+// so the site never sees your Inkwell address or key. The key is kept in chrome.storage.local on this computer.
 
 const SERVERS = ["http://127.0.0.1:5050", "http://localhost:5050", "https://reachout-application.netlify.app"];
 
@@ -10,7 +10,7 @@ async function settings() {
 
 async function call(path, { method = "GET", body } = {}) {
   const { server, key } = await settings();
-  if (!key) throw new Error("Add your Reachout extension key first (click the extension icon).");
+  if (!key) throw new Error("Add your Inkwell extension key first (click the extension icon).");
   let r;
   try {
     r = await fetch(server + path, {
@@ -21,7 +21,7 @@ async function call(path, { method = "GET", body } = {}) {
     });
   } catch {
     throw new Error(server.includes("127.0.0.1") || server.includes("localhost")
-      ? "Can't reach Reachout on this Mac. Start it with start.command." : "Can't reach Reachout. Check your connection.");
+      ? "Can't reach Inkwell on this Mac. Start it with start.command." : "Can't reach Inkwell. Check your connection.");
   }
   if ((path === "/api/ext/resume" || path === "/api/ext/cover") && r.ok) {
     const buf = new Uint8Array(await r.arrayBuffer());
@@ -30,7 +30,7 @@ async function call(path, { method = "GET", body } = {}) {
     return { name: r.headers.get("X-Filename") || "resume.pdf", base64: btoa(bin) };
   }
   const data = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(data.error || `Reachout answered ${r.status}.`);
+  if (!r.ok) throw new Error(data.error || `Inkwell answered ${r.status}.`);
   return data;
 }
 

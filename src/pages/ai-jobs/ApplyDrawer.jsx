@@ -18,7 +18,7 @@ export function ApplyDrawer({ open, onClose, d, me, onSaved }) {
     ["current_company", "Current company", ""], ["location", "Current city", "Bengaluru"], ["notice", "Notice period", "30 days"]];
   return (
     <Drawer open={open} onClose={onClose} label="Auto-apply">
-      <DrawerHead title="Auto-apply" sub="Reachout AI fills job applications with these details." onClose={onClose} />
+      <DrawerHead title="Auto-apply" sub="Inkwell AI fills job applications with these details." onClose={onClose} />
       <div className="dr-pad ai-drawer">
         <p className="help">From your profile: <b>{me?.name || "add your name"}</b> · {me?.email || "your email"} · {me?.phone || <a className="link" href="/app/profile">add your phone</a>}</p>
         <div className="grid-2">
@@ -40,7 +40,7 @@ export function ApplyDrawer({ open, onClose, d, me, onSaved }) {
           (Greenhouse, Lever, Ashby). It never logs in to any site, never makes up answers, and stops at CAPTCHAs. Anything it can't
           finish is marked “Needs you” with a link. Each submitted application is added to your Applications page.
         </Alert>
-        <Check checked={ok} onChange={setOk}>I allow Reachout AI to submit applications on my behalf for the jobs I select.</Check>
+        <Check checked={ok} onChange={setOk}>I allow Inkwell AI to submit applications on my behalf for the jobs I select.</Check>
         <div className="form-actions">
           {d?.consent && <Button variant="ghost" onClick={() => save(false)}>Turn off auto-apply</Button>}
           <span className="grow" />

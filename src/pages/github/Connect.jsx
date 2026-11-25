@@ -18,9 +18,9 @@ export function Connect({ onDone }) {
     <motion.form className="card card-pad connect-card" onSubmit={submit} noValidate initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ maxWidth: 640 }}>
       <motion.div className="connect-ic gh" initial={{ scale: .5, rotate: -10 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 260, damping: 14 }}><Icon name="github" /></motion.div>
       <h3>Connect your GitHub account</h3>
-      <p className="help">Reachout uses a <b>personal access token</b> to read and update your repositories. It's stored encrypted and only used from this app.</p>
+      <p className="help">Inkwell uses a <b>personal access token</b> to read and update your repositories. It's stored encrypted and only used from this app.</p>
       <ol className="howto">
-        <li>Open <a href="https://github.com/settings/tokens/new?scopes=repo,workflow&description=Reachout" target="_blank" rel="noopener noreferrer">GitHub → Settings → Developer settings → Tokens (classic)</a>. The <b>repo</b> and <b>workflow</b> permissions are pre-selected.</li>
+        <li>Open <a href="https://github.com/settings/tokens/new?scopes=repo,workflow&description=Inkwell" target="_blank" rel="noopener noreferrer">GitHub → Settings → Developer settings → Tokens (classic)</a>. The <b>repo</b> and <b>workflow</b> permissions are pre-selected.</li>
         <li>Pick an expiry, click <b>Generate token</b>, and copy it (it starts with <code>ghp_</code>).</li>
         <li>Paste it below.</li>
       </ol>

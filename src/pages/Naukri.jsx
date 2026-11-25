@@ -21,7 +21,7 @@ export default function Naukri() {
   const links = (
     <motion.div className="card card-pad" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .08 }}>
       <h3 className="sec-h"><Icon name="external" />Open on Naukri</h3>
-      <p className="help" style={{ marginBottom: 12 }}>Naukri doesn't offer an API for job seekers, and signing in to it from another app would break its terms. So Reachout reads the emails Naukri sends you, and these open Naukri directly.</p>
+      <p className="help" style={{ marginBottom: 12 }}>Naukri doesn't offer an API for job seekers, and signing in to it from another app would break its terms. So Inkwell reads the emails Naukri sends you, and these open Naukri directly.</p>
       <div className="link-grid">
         {[["user", "My profile", d.links.profile], ["briefcase", "Applied jobs", d.links.applies], ["zap", "Recommended jobs", d.links.recommended], ["inbox", "Recruiter inbox", d.links.inbox], ["search", "Jobs posted today", d.links.search]].map(([ic, l, h]) => (
           <motion.a key={l} className="btn" target="_blank" rel="noopener noreferrer" href={h} whileHover={{ y: -2 }}><Icon name={ic} />{l}</motion.a>))}
@@ -43,9 +43,9 @@ export default function Naukri() {
         <motion.form className="card card-pad connect-card" onSubmit={connect} noValidate initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
           <motion.div className="connect-ic nk" initial={{ scale: .5, rotate: -10 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 260, damping: 14 }}><Icon name="naukri" /></motion.div>
           <h3>Connect Naukri</h3>
-          <p className="help">Reachout follows your Naukri activity through the emails Naukri sends: <b>“You applied for…”</b>, <b>“Status of your job application has changed”</b>, recruiter messages and job alerts. They appear in Applications, Job matches and on your dashboard, and update every morning.</p>
+          <p className="help">Inkwell follows your Naukri activity through the emails Naukri sends: <b>“You applied for…”</b>, <b>“Status of your job application has changed”</b>, recruiter messages and job alerts. They appear in Applications, Job matches and on your dashboard, and update every morning.</p>
           <ol className="howto">
-            <li>Make sure your Naukri account uses <b>{app.me.email}</b>{!d.email_ready && <> and <a href="/app/profile">connect Gmail</a> in Reachout</>}.</li>
+            <li>Make sure your Naukri account uses <b>{app.me.email}</b>{!d.email_ready && <> and <a href="/app/profile">connect Gmail</a> in Inkwell</>}.</li>
             <li>On Naukri, go to <a href="https://www.naukri.com/mnjuser/settings" target="_blank" rel="noopener noreferrer">Settings → Communications</a> and keep application-status and job-alert emails on.</li>
             <li>Optionally paste your profile link, then connect.</li>
           </ol>

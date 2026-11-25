@@ -180,9 +180,9 @@ function NotifSettings({ cfg, setCfg }) {
   return (
     <div className="notif-settings">
       <div className="switch-row"><span className="sr-t"><b>Sound</b><span className="help">Play a chime when something new arrives</span></span><Switch checked={cfg.prefs.sound} onChange={v => save("sound", v)} /></div>
-      <div className="switch-row"><span className="sr-t"><b>Browser notifications</b><span className="help">{!pushSupported() ? "Not supported in this browser" : perm === "denied" ? "Blocked. Allow notifications for this site in your browser settings" : "Alerts even when Reachout's tab is closed"}</span></span>
+      <div className="switch-row"><span className="sr-t"><b>Browser notifications</b><span className="help">{!pushSupported() ? "Not supported in this browser" : perm === "denied" ? "Blocked. Allow notifications for this site in your browser settings" : "Alerts even when Inkwell's tab is closed"}</span></span>
         <Switch checked={!!sub} disabled={busy || !pushSupported() || perm === "denied"} onChange={togglePush} /></div>
-      <div className="switch-row"><span className="sr-t"><b>Mac alerts</b><span className="help">{cfg.macAvailable ? "macOS notifications, even with the browser quit" : "Available when Reachout runs on your own Mac"}</span></span>
+      <div className="switch-row"><span className="sr-t"><b>Mac alerts</b><span className="help">{cfg.macAvailable ? "macOS notifications, even with the browser quit" : "Available when Inkwell runs on your own Mac"}</span></span>
         <Switch checked={cfg.prefs.mac} disabled={!cfg.macAvailable} onChange={v => save("mac", v)} /></div>
       <div className="ns-actions">
         <Button size="sm" icon="bell" onClick={() => api("/api/notifications/test", { json: {} }).catch(fail)}>Send a test</Button>

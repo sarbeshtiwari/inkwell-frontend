@@ -12,7 +12,7 @@ export function KitDrawer({ job, onClose, onAnswers }) {
       <div className="dr-pad ai-drawer">
         {!k ? <p className="help">Loading…</p> : <>
           <Alert tone="info" icon="shield">Some sites only accept applications from a person's own browser. Open the form in your browser and click
-            the <b>Reachout Autofill</b> extension to fill it in one go (set it up under “Browser extension”), or copy each answer from here.</Alert>
+            the <b>Inkwell Autofill</b> extension to fill it in one go (set it up under “Browser extension”), or copy each answer from here.</Alert>
           <div className="form-actions" style={{ justifyContent: "flex-start" }}>
             <a className="btn btn-primary" href={k.apply_url} target="_blank" rel="noopener noreferrer"><Icon name="link" />Open the application form</a>
             <a className="btn" href="/app/files" target="_blank" rel="noopener noreferrer"><Icon name="file" />Download resume</a>

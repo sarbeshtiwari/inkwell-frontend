@@ -1,0 +1,146 @@
+/* Notebook design — the look of sarbeshtiwari.vercel.app applied to Inkwell: warm paper, tomato accent, serif headings,
+   handwritten notes, pill buttons that tilt on hover, tape on cards, a highlighter swipe, doodles and an ink cursor trail.
+   Loaded after base.css; it only remaps tokens and adds a few decorations, so every page keeps working. */
+
+:root {
+  --paper: #fffefd; --paper-tint: #f6f2ea; --paper-edge: #ece5d7;
+  --tomato: #f25c3b; --tomato-deep: #c8401f; --marigold: #f4b43a; --sage: #7ba67a; --sage-deep: #4f7d52;
+  --lake: #3e7b9e; --grape: #6b4e8a; --rose: #e89bae;
+  --note-marigold: #fbe6b4; --note-sage: #dcebd6; --note-rose: #f8dde3; --note-lake: #d6e6ef;
+  --doodle-ink: #1a1715;
+
+  --bg: #fffefd;
+  --surface: #ffffff;
+  --surface-2: #f6f2ea;
+  --muted: #f3eee4;
+  --muted-2: #ece5d7;
+  --text: #1a1715;
+  --text-2: #2f2a26;
+  --text-3: #4a433d;
+  --text-4: #7a7268;
+  --border: #ece5d7;
+  --border-strong: #d8cfbd;
+  --accent: #f25c3b;
+  --accent-2: #3e7b9e;
+  --accent-hover: #c8401f;
+  --accent-soft: #fde7e0;
+  --accent-text: #b23a1c;
+  --grad: linear-gradient(var(--accent), var(--accent));
+  --grad-soft: linear-gradient(var(--accent-soft), var(--accent-soft));
+  --success: #4f7d52; --success-soft: #e6f0e3; --success-border: #c6dcc1;
+  --warning: #b07410; --warning-soft: #fdf1d8; --warning-border: #f2d79a;
+  --teal: #3e7b9e; --teal-soft: #e2edf4; --violet: #6b4e8a; --violet-soft: #ede6f3;
+  --shadow-xs: 0 1px 2px rgb(40 30 20 / .05);
+  --shadow-sm: 0 4px 10px rgb(40 30 20 / .08), 0 2px 4px rgb(40 30 20 / .05);
+  --shadow-md: 0 10px 26px -8px rgb(40 30 20 / .16), 0 3px 8px -2px rgb(40 30 20 / .07);
+  --shadow-lg: 0 24px 56px rgb(40 30 20 / .2), 0 8px 18px rgb(40 30 20 / .12);
+  --glow: 0 4px 10px rgb(40 30 20 / .08);
+  --ring: 0 0 0 3px rgb(242 92 59 / .22);
+  --r-sm: 8px; --r: 10px; --r-lg: 12px; --r-xl: 14px;
+  --serif: "IBM Plex Serif", "Iowan Old Style", Georgia, serif;
+  --display: "Fraunces", "IBM Plex Serif", Georgia, serif;
+  --hand: "Caveat", "Bradley Hand", "Segoe Print", cursive;
+  --ease-spring: cubic-bezier(.34, 1.56, .64, 1);
+  --ease-out: cubic-bezier(0, 0, .2, 1);
+  --blend: multiply;
+}
+:root[data-theme="dark"] {
+  --paper: #14110e; --paper-tint: #1e1a16; --paper-edge: #2c2620;
+  --note-marigold: #4a3b1c; --note-sage: #2c3b2b; --note-rose: #46292f; --note-lake: #1f3441;
+  --doodle-ink: #f0ebe0;
+  --bg: #14110e;
+  --surface: #1b1713;
+  --surface-2: #1e1a16;
+  --muted: #241f1a;
+  --muted-2: #2c2620;
+  --text: #f0ebe0;
+  --text-2: #ddd5c7;
+  --text-3: #b8b0a2;
+  --text-4: #8a8174;
+  --border: #2c2620;
+  --border-strong: #3d352d;
+  --accent: #f25c3b;
+  --accent-hover: #f6866b;
+  --accent-soft: #3a1d14;
+  --accent-text: #f6866b;
+  --success: #8fbf8d; --success-soft: #1f2a1e; --success-border: #2f442d;
+  --warning: #f4b43a; --warning-soft: #2e230c; --warning-border: #4a3a15;
+  --teal: #7fb3d2; --teal-soft: #15252f; --violet: #b49ad0; --violet-soft: #251c30;
+  --shadow-xs: 0 1px 2px rgb(0 0 0 / .4);
+  --shadow-sm: 0 4px 12px rgb(0 0 0 / .35);
+  --shadow-md: 0 12px 28px -10px rgb(0 0 0 / .6);
+  --shadow-lg: 0 24px 56px rgb(0 0 0 / .55), 0 8px 18px rgb(0 0 0 / .35);
+  --ring: 0 0 0 3px rgb(242 92 59 / .35);
+  --blend: screen;
+}
+
+/* ---- type ---- */
+::selection { background: rgb(242 92 59 / .22); }
+h1, h2, .hand-title { font-family: var(--serif); font-weight: 500; letter-spacing: -.01em; }
+em { font-style: italic; color: var(--tomato); }
+.hand, .hand-note { font-family: var(--hand); font-weight: 600; }
+.kicker { font-family: var(--mono); font-size: 11.5px; letter-spacing: .2em; text-transform: uppercase; color: var(--lake); }
+:focus-visible { outline: 2px dashed var(--tomato); outline-offset: 3px; }
+
+/* the highlighter swipe used under a key word */
+.ink-mark { position: relative; white-space: nowrap; isolation: isolate; }
+.ink-mark::after {
+  content: ""; position: absolute; left: -3%; right: -3%; bottom: .06em; height: .36em; z-index: -1;
+  background: rgb(244 180 58 / .45); border-radius: 40% 60% 45% 55% / 60% 40% 60% 40%;
+  transform-origin: left; transform: scaleX(0) rotate(-1deg); animation: nb-mark 700ms var(--ease-out) 400ms forwards;
+}
+@keyframes nb-mark { to { transform: scaleX(1) rotate(-1deg); } }
+
+/* ---- buttons: pills that lean when you hover ---- */
+.btn { border-radius: 999px; transition: transform 280ms var(--ease-spring), background .2s, color .2s, border-color .2s, box-shadow .28s var(--ease-out); }
+.btn-primary { background: var(--tomato); color: #fffefd; border-color: transparent; box-shadow: 0 6px 18px rgb(242 92 59 / .28); }
+.btn-primary:hover:not(:disabled) { background: var(--tomato-deep); transform: translateY(-2px) rotate(-1deg); }
+.btn-ghost:hover:not(:disabled), .btn:not(.btn-primary):not(.btn-icon):hover:not(:disabled) { transform: translateY(-1px) rotate(1deg); }
+.btn-icon { border-radius: 999px; }
+
+/* ---- cards: paper, a touch of tape on featured ones ---- */
+.card { border-radius: 12px; }
+.kpi { border-radius: 12px; position: relative; transition: transform .35s var(--ease-spring), box-shadow .35s; }
+.kpi:hover { transform: translateY(-3px) rotate(-.4deg); box-shadow: var(--shadow-md); }
+.taped { position: relative; }
+.taped::before {
+  content: ""; position: absolute; top: -9px; left: calc(50% - 44px); width: 88px; height: 20px; z-index: 2; pointer-events: none;
+  background: rgb(244 180 58 / .55); transform: rotate(-3deg);
+}
+.kpi:nth-child(4n+2).taped::before { background: rgb(123 166 122 / .5); transform: rotate(2deg); }
+.kpi:nth-child(4n+3).taped::before { background: rgb(232 155 174 / .55); transform: rotate(-2deg); }
+.kpi:nth-child(4n+4).taped::before { background: rgb(62 123 158 / .35); transform: rotate(3deg); }
+
+/* badges and chips in the portfolio's mono-outline style */
+.badge.plain, .chip-mono { font-family: var(--mono); letter-spacing: .08em; text-transform: uppercase; font-size: 10.5px; }
+
+/* ---- sticky notes ---- */
+.note { background: var(--note-marigold); color: var(--text); border-radius: 2px; padding: 16px 18px; box-shadow: 0 6px 14px rgb(40 30 20 / .12); transform: rotate(-1.2deg); }
+.note.sage { background: var(--note-sage); transform: rotate(1deg); }
+.note.rose { background: var(--note-rose); }
+.note.lake { background: var(--note-lake); transform: rotate(.8deg); }
+
+/* ---- doodles (hidden on small screens and for reduced motion) ---- */
+.doodle { position: absolute; pointer-events: none; color: var(--doodle-ink); opacity: .85; }
+.doodle svg { width: 100%; height: 100%; display: block; }
+.doodle.spin { animation: nb-spin 18s linear infinite; }
+.doodle.wobble { animation: nb-wobble 4.5s steps(6) infinite; }
+@keyframes nb-spin { to { transform: rotate(360deg); } }
+@keyframes nb-wobble { 0% { transform: rotate(-4deg); } 33% { transform: rotate(5deg); } 66% { transform: rotate(-2deg); } to { transform: rotate(-4deg); } }
+@media (max-width: 860px) { .doodle { display: none; } }
+
+/* ---- ink cursor trail (desktop pointers only; set up by cursor.js) ---- */
+.blob-cursor { position: fixed; inset: 0; pointer-events: none; z-index: 9999; }
+.blob-cursor i { position: fixed; left: 0; top: 0; border-radius: 50%; mix-blend-mode: var(--blend); will-change: transform; transition: width .22s var(--ease-spring), height .22s var(--ease-spring); }
+
+@media (prefers-reduced-motion: reduce) {
+  .ink-mark::after { animation: none; transform: scaleX(1) rotate(-1deg); }
+  .doodle.spin, .doodle.wobble { animation: none; }
+  .btn:hover, .kpi:hover { transform: none !important; }
+  .note { transform: none; }
+}
+
+/* page titles and section headings in the serif, like the portfolio */
+.top-title h1 { font-family: var(--serif); font-weight: 500; letter-spacing: -.01em; font-size: 23px; }
+.card-head h3, .sec-h, .dr-head h3 { font-family: var(--serif); font-weight: 600; letter-spacing: 0; }
+.kpi b { font-family: var(--serif); font-weight: 500; }
