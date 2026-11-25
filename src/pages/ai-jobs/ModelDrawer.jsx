@@ -39,7 +39,13 @@ export function ModelDrawer({ open, onClose, onSaved }) {
             {d.providers.map(x => <option key={x.id} value={x.id}>{x.label}{d.keys[x.id] ? " ✓" : ""}</option>)}
           </select>
         </Field>
-        {f.provider === "ollama" ? (
+        {f.provider === "claude_cli" || f.provider === "kiro_cli" ? <>
+          <Alert tone="info" icon="sparkles">Uses the {f.provider === "claude_cli" ? "Claude Code" : "Kiro"} login on this Mac, so it counts against your own plan's usage. Your resume and the job text go to {f.provider === "claude_cli" ? "Anthropic" : "Kiro"} under your account. On the hosted Reachout it falls back to Ollama.</Alert>
+          <Field label="Model" opt="(optional)" hint={f.provider === "claude_cli" ? "Leave empty for Claude Code's default, or pick sonnet, opus or haiku." : "Leave empty for Kiro's default."}>
+            <input className="input" list="ai-model-names" value={f.model} onChange={e => setF(x => ({ ...x, model: e.target.value }))} placeholder="default" />
+            <datalist id="ai-model-names">{(f.provider === "claude_cli" ? ["sonnet", "opus", "haiku"] : []).map(n => <option key={n} value={n} />)}</datalist>
+          </Field>
+        </> : f.provider === "ollama" ? (
           <Alert tone="info">Runs on your Mac; nothing leaves it. {d.ollama_up ? "Ollama is running." : <>Ollama isn't running. Install it, then run <code>ollama pull qwen3:4b</code>.</>}</Alert>
         ) : <>
           {f.provider !== "local" && <Field label="API key" hint={d.keys[f.provider] ? "A key is saved. Paste a new one to replace it." : "Stored encrypted, never shown again."}>

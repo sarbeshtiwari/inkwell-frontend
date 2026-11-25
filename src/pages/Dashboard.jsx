@@ -7,6 +7,7 @@ import { go, replacePath } from "../lib/router";
 import { useApp } from "../lib/store";
 import { Bar, Doughnut, Line, centerText, gradient, useChartTheme } from "../ui/charts";
 import { Avatar, Badge, Empty, Icon, Seg, Sk } from "../ui/kit";
+import { Briefing } from "./Learning";
 import { AppBadge, Delta, Kpi, MailSyncLine, SendBadge, STAGE_TONE } from "../ui/shared";
 
 const TONES = { applied: "#94a3b8", incomplete: "#f59e0b", in_review: "#0f6b54", assessment: "#b45309", shortlisted: "#14b8a6", interview: "#0d9488", offer: "#16a34a", rejected: "#ef4444", closed: "#9ca3af", withdrawn: "#cbd5e1" };
@@ -87,6 +88,7 @@ export default function Dashboard({ route }) {
         : !d ? <div className="kpis">{Array.from({ length: 6 }, (_, i) => <div key={i} className="kpi sk-card" style={{ height: 112 }} />)}</div>
         : <div className={loading ? "dash-body loading" : "dash-body"}><Glance d={d} f={f} set={set} show={show} app={app} /></div>}
 
+      {show("all") && <section className="card card-pad dash-brief"><Briefing compact /><a className="link-btn" href="/app/learning">Open today's lesson and full briefing</a></section>}
       {show("all outreach") && <Outreach app={app} history={history} />}
     </div>
   );

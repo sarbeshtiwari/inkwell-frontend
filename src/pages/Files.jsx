@@ -18,7 +18,7 @@ export default function Files() {
     setErr("");
     const allowed = new Set(me.allowed_docs || []), max = (me.max_file_mb || 10) * 1048576;
     const bad = list.find(f => !allowed.has(ext(f.name)));
-    if (bad) return setErr(`“${bad.name}” isn't a supported file type. Use PDF, Word, Excel, PowerPoint, text or image files.`);
+    if (bad) return setErr(`“${bad.name}” isn't a supported file type. Use PDF, Word, Excel, PowerPoint, LaTeX, text or image files.`);
     const big = list.find(f => f.size > max);
     if (big) return setErr(`“${big.name}” is larger than ${me.max_file_mb} MB.`);
     if (list.find(f => !f.size)) return setErr("One of the files is empty.");
@@ -42,7 +42,7 @@ export default function Files() {
       <Dropzone onFiles={onFiles} multiple busy={!!prog}>
         <motion.div className="dz-ic" animate={prog ? { y: [0, -4, 0] } : {}} transition={{ repeat: Infinity, duration: 1 }}><Icon name="upload" /></motion.div>
         <b>{prog ? <><Spinner /> {prog.p >= 1 ? "Encrypting and saving…" : `Uploading ${prog.n} file${prog.n === 1 ? "" : "s"}…`}</> : "Drop files here or click to upload"}</b>
-        <span className="help">PDF, Word, Excel, PowerPoint, text or images · up to {me.max_file_mb || 10} MB each · {kb(used)} of {me.max_files_mb || 25} MB used</span>
+        <span className="help">PDF, Word, Excel, PowerPoint, LaTeX (.tex), text or images · up to {me.max_file_mb || 10} MB each · {kb(used)} of {me.max_files_mb || 25} MB used</span>
         <div className="upbar" style={{ visibility: prog ? "visible" : "hidden" }}><div style={{ width: `${(prog?.p || 0) * 100}%` }} /></div>
       </Dropzone>
       <FormError>{err}</FormError>

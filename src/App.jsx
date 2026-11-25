@@ -5,6 +5,7 @@ import SendView from "./layout/SendView";
 import { useRoute } from "./lib/router";
 import { useApp } from "./lib/store";
 import { Button, Empty, ModalHost, SkBlock, Toasts, ease } from "./ui/kit";
+import { ResearchHost } from "./ui/research";
 
 const P = {
   dashboard: lazy(() => import("./pages/Dashboard")),
@@ -28,7 +29,9 @@ const P = {
   settings: lazy(() => import("./pages/Settings")),
   leads: lazy(() => import("./pages/Leads")),
   finder: lazy(() => import("./pages/Finder")),
+  nearby: lazy(() => import("./pages/Nearby")),
   "ai-jobs": lazy(() => import("./pages/AIJobs")),
+  learning: lazy(() => import("./pages/Learning")),
 };
 export const TITLES = {
   dashboard: ["Dashboard", ""],
@@ -52,6 +55,8 @@ export const TITLES = {
   settings: ["Settings", ""],
   "ai-jobs": ["AI job match", "Tell Reachout AI what you want. It reads your resume, searches for openings, ranks every match and can apply for you."],
   finder: ["Email finder", "Find the HR and careers email addresses that companies publish on their websites, then save them as contacts."],
+  nearby: ["Companies near me", "Every company around you or any place you pick, on a map: what they do, their careers page, open jobs and the HR email they publish."],
+  learning: ["Learning", "A 90-day interview course, daily DSA, spaced review of what you studied, and a morning briefing with papers, tech news and your job search."],
   leads: ["Leads", "Enquiries from the contact form on your website. Reply, add notes and track each one."],
 };
 
@@ -89,6 +94,7 @@ export default function App() {
       </Shell>
       <SendView />
       <ModalHost />
+      <ResearchHost />
       <Toasts />
     </MotionConfig>
   );

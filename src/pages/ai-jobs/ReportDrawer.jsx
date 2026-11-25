@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../../lib/api";
 import { Alert, Badge, Button, Drawer, DrawerHead, Icon, Spinner, fail, toast } from "../../ui/kit";
+import { ResearchButton } from "../../ui/research";
 
 const MATCH_TONE = { Strong: "ok", Partial: "warn", Gap: "bad" };
 const TIER_TONE = { "High Confidence": "ok", "Proceed with Caution": "warn", Suspicious: "bad", Closed: "bad" };
@@ -85,15 +86,19 @@ function Extras({ job, stale }) {
     {x.similar.length > 0 && <p className="help ai-note"><Icon name="layers" />Reads like jobs you already evaluated: {x.similar.map(s => `${s.title} at ${s.company} (${s.similarity}% alike)`).join(", ")}. Reuse that cover letter and stories.</p>}
 
     <Block letter="R" title="Resume for this job">
-      <p className="help">Your resume, aimed at this posting: summary, skills and the most relevant work first. Facts stay exactly as on your resume; any line that adds one is dropped.</p>
+      <p className="help">Your resume, aimed at this posting by order only: skills and bullets are reordered so the most relevant come first, and the summary may be reworded with words already on your resume. Nothing is added; any AI change that adds something is rejected.</p>
       {x.resume && <div className="ai-answer-foot">
-        <Badge tone={x.resume.use ? "ok" : ""}>{x.resume.doc}</Badge>{x.resume.keywords != null && <span className="help">keywords {x.resume.keywords}%</span>}
+        <Badge tone={x.resume.use ? "ok" : ""}>{x.resume.doc}</Badge>{x.resume.format === "LaTeX" && <Badge tone="brand" dot={false} title="Typeset with LaTeX (tectonic). Upload your own .tex in Files to keep your exact layout.">LaTeX</Badge>}{x.resume.keywords != null && <span className="help">keywords {x.resume.keywords}%</span>}
         <span className="grow" />
         <a className="btn btn-sm" href="/app/files" target="_blank" rel="noopener noreferrer"><Icon name="file" />Open in Files</a>
         {x.resume.use ? <Button size="sm" variant="ghost" onClick={() => useResume(false)}>Stop using</Button>
           : <Button size="sm" variant="primary" onClick={() => useResume(true)}>Send it for this job</Button>}
       </div>}
       {x.resume?.dropped?.length > 0 && <p className="help">Left out {x.resume.dropped.length} reworded line{x.resume.dropped.length === 1 ? "" : "s"} that added something not on your resume.</p>}
+      {x.resume?.analysis?.length > 0 && <details className="ai-why"><summary>What the job needs, and your match</summary><ul>
+        {x.resume.analysis.map((a, i) => <li key={i}><Badge tone={{ direct: "ok", transferable: "brand", adjacent: "warn", gap: "bad" }[a.match]}>{a.match}</Badge> {a.need}</li>)}</ul></details>}
+      {(x.resume?.notes?.length > 0 || x.resume?.checks?.length > 0) && <details className="ai-why"><summary>Why this order</summary><ul>
+        {[...(x.resume.notes || []), ...(x.resume.checks || [])].map((n, i) => <li key={i}>{n}</li>)}</ul></details>}
       <div><Button size="sm" icon="file" busy={busy === "resume"} busyLabel="Making…" onClick={() => act("resume", `/api/ai-jobs/resume/${id}`, {}, () => toast("Saved in Files. Check it before sending."))}>
         {x.resume ? "Make it again" : "Make a tailored resume"}</Button></div>
     </Block>
@@ -133,6 +138,7 @@ export function ReportDrawer({ job, onClose, onEvaluated, onAnswers }) {
   return (
     <Drawer open={!!job} onClose={onClose} label="Job evaluation" wide>
       <DrawerHead title="Evaluation" sub={job ? `${job.title} · ${job.company}` : ""} onClose={onClose}>
+        {job?.company && <ResearchButton name={job.company} jobs={[{ title: job.title, url: job.url }]} />}
         {r && <Button size="sm" variant="ghost" icon="refresh" busy={busy} onClick={run}>Re-evaluate</Button>}
       </DrawerHead>
       <div className="dr-pad ai-drawer">

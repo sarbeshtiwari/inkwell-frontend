@@ -5,6 +5,7 @@ import { emit, on } from "../lib/bus";
 import { ago, fmtD, fmtDT, fmtT, gmailLink, localInput, safeHref } from "../lib/format";
 import { go, replacePath } from "../lib/router";
 import { Avatar, Button, Chips, Drawer, DrawerHead, Empty, Field, FormError, Icon, Sk, applyError, fail, modal, spring, toast, useDebounced, Pager, usePager } from "../ui/kit";
+import { ResearchButton } from "../ui/research";
 import { AppBadge, Kpi, MailSyncLine } from "../ui/shared";
 
 export const FILTERS = [
@@ -141,7 +142,9 @@ function AppDetail({ id, statuses, onChange, onDelete }) {
     try { await api(`/api/apps/${id}`, { method: "DELETE" }); onDelete(id); toast("Deleted"); } catch (e) { fail(e); }
   };
   return <>
-    <DrawerHead logo={<Avatar name={a.company} logo size="lg" />} title={a.company} sub={<>{a.role || "Position not stated"}{a.job_id && <> · <span className="mono">{a.job_id}</span></>}</>} onClose={() => go("applications")} />
+    <DrawerHead logo={<Avatar name={a.company} logo size="lg" />} title={a.company} sub={<>{a.role || "Position not stated"}{a.job_id && <> · <span className="mono">{a.job_id}</span></>}</>} onClose={() => go("applications")}>
+      <ResearchButton name={a.company} jobs={a.role ? [{ title: a.role, url: "" }] : []} />
+    </DrawerHead>
     <div className="dr-pad">
       <div className="stepper">
         {steps.map((s, i) => (

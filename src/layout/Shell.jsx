@@ -15,7 +15,7 @@ export const NAV = [
   { key: "main", group: null, items: [["dashboard", "Dashboard", "home"], ["activity", "Activity", "activity"]] },
   { key: "outreach", group: "Outreach", icon: "send", items: [["contacts", "Contacts", "users", "contacts"], ["finder", "Email finder", "search"], ["replies", "Replies", "reply", "replies"],
     ["templates", "Templates", "message"], ["files", "Files", "file"], ["inbox", "Inbox insights", "inbox"]] },
-  { key: "career", group: "Career", icon: "briefcase", items: [["ai-jobs", "AI job match", "sparkles", null, "ai"], ["applications", "Applications", "briefcase", "apps"], ["jobs", "Job matches", "zap", "jobs"], ["posts", "Hiring posts", "message", "queue"]] },
+  { key: "career", group: "Career", icon: "briefcase", items: [["ai-jobs", "AI job match", "sparkles", null, "ai"], ["nearby", "Companies near me", "globe"], ["learning", "Learning", "book"], ["applications", "Applications", "briefcase", "apps"], ["jobs", "Job matches", "zap", "jobs"], ["posts", "Hiring posts", "message", "queue"]] },
   { key: "website", group: "My website", icon: "globe", items: [["portfolio", "Website & portfolio", "star"], ["leads", "Leads", "inbox", "leads"]] },
 ];
 const HOT = ["replies", "apps", "jobs", "leads"]; // counts that mean “new, look at this”
