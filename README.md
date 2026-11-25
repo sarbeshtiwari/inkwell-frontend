@@ -20,19 +20,20 @@ The app has no server of its own. Netlify serves the built files and forwards `/
 
 | Area | Pages |
 |---|---|
-| Overview | **Dashboard** (KPIs, charts, filters), **Activity** (every message sent, by day) |
+| Overview | **Dashboard** (KPIs, charts, filters, today's briefing), **Activity** (every message sent, by day) |
 | Outreach | **Contacts** (import Excel/CSV, stages, notes), **Email finder** (HR/careers addresses from company websites → contacts), **Replies** (detected replies + suggested answers), **Templates**, **Files**, **Inbox insights** (emails by company) |
-| Career | **AI job match** (marked AI: resume-based search, ranked matches with reasons, auto-apply with watch mode, My answers, cover letter, Apply in my browser, extension setup), **Applications** (timelines from your inbox), **Job matches** (scored alerts), **Hiring posts** (scheduled emails) |
+| Career | **AI job match** (marked AI: resume-based search over 100+ boards incl. Hirist, Cutshort, Wellfound and Y Combinator, ranked matches with reasons, learning from your feedback, auto-apply with watch mode, My answers, cover letter, tailored resume with "What the job needs" / "Why this order" and a LaTeX badge, Apply in my browser, extension setup, AI model incl. Claude Code), **Companies near me** (map of companies around you or any place, kinds of company chart, careers pages, openings in your country or remote, HR emails, Google Places option), **Learning** (90-day interview course: today's lesson in three tracks + DSA, morning briefing with papers, tech news and GitHub, spaced-review queue, course map, 564-question bank, streak and XP), **Applications** (timelines from your inbox), **Job matches** (scored alerts), **Hiring posts** (scheduled emails) |
 | My website | **Website & portfolio** (builder with live preview, projects from GitHub), **Leads** (contact-form messages) |
 | Connected | **GitHub** (repos, editor, PRs), **LinkedIn**, **Naukri**, **WhatsApp** (hidden when the server disables it; login deleted 2 hours after linking, with a countdown) |
 | Account | **Profile & email**, **Settings** (theme, notifications, delete account) |
 
-Also: a 5-step **campaign** wizard with a live preview, a **⌘K** command palette, live notifications
+Also: a **Research** drawer (open from Companies near me, an evaluation or an application) that shows a company's
+CEO, careers page, hiring email, size and more, each with its source page and quote; a 5-step **campaign** wizard with a live preview, a **⌘K** command palette, live notifications
 (in-app, browser push), dark/light theme, collapsible sidebar, and pagination everywhere.
 
 ## Tech
 
-React 18 · Vite 5 · Framer Motion (transitions) · Chart.js · Monaco editor (GitHub page). No UI library: the
+React 18 · Vite 5 · Framer Motion (transitions) · Chart.js · Leaflet (Companies near me map) · Monaco editor (GitHub page). No UI library: the
 components are in `src/ui/kit.jsx`. No state library: one React context in `src/lib/store.jsx`.
 
 ## Project layout
@@ -55,7 +56,9 @@ src/
     router.js              Path router (/app/<page>/<param>) + legacy #page links
     format.js              Dates, numbers, safeHref() (blocks javascript:/data: links), LANDING url
     theme.js               Theme (saved server-side in a cookie, never localStorage)
-  ui/                      kit.jsx (Button, Field, Drawer, Seg, Pager…), icons.js, charts.jsx, shared.jsx
+    markdown.js            Small escaped Markdown renderer for course text (no raw HTML from content)
+  ui/                      kit.jsx (Button, Field, Drawer, Seg, Pager…), icons.js, charts.jsx, shared.jsx,
+                           research.jsx (company research drawer + Research button, mounted once in App)
   styles/                  base.css (tokens, light/dark), app.css (shell), pages.css (pages)
 ```
 
@@ -103,3 +106,9 @@ If every API call returns "Not found", the secret differs between Netlify and Re
 
 Netlify cuts proxied requests after about 26 seconds; the app is built for that (live notifications reconnect,
 long mailbox reads run in the background).
+
+## Credits
+
+The Learning page's course content, spaced review and briefing are adapted from
+[Morrow](https://github.com/GuptaSoujanya/Morrow) (MIT licence); the licence ships with the backend in
+`features/learning/LICENSE-morrow`.
