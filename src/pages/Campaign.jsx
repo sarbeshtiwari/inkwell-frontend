@@ -34,7 +34,7 @@ export default function Campaign() {
   const tpl = data.templates.find(t => t.id === tplId);
   const [subject, setSubject] = useState(tpl?.subject || "");
   const [body, setBody] = useState(tpl?.body || "");
-  const [docs, setDocs] = useState(() => new Set(st.documents ?? data.documents.map(d => d.name)));
+  const [docs, setDocs] = useState(() => { const have = data.documents.map(d => d.name); return new Set(st.documents ? st.documents.filter(n => have.includes(n)) : have); });
   const [limit, setLimit] = useState(st.limit ?? 20);
   const [minD, setMinD] = useState(st.min_delay ?? 30);
   const [maxD, setMaxD] = useState(st.max_delay ?? 90);
