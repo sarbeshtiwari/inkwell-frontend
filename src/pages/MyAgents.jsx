@@ -19,11 +19,12 @@ const LOOK = {  // id: [colour, icon, what it does in a few words]
   job_alerts: ["#4f46e5", "zap", "Picks jobs from your alerts"],
   weekly_digest: ["#65a30d", "calendar", "Your Monday summary"],
   morning: ["#d97706", "sun", "Your daily mail routine"],
+  email_finder: ["#0f766e", "mail", "Finds hiring emails on company sites"],
 };
 const look = id => LOOK[id] || ["#64748b", "sparkles", ""];
 const NAMES = {
   orchestrator: "Find and prepare applications", outreach: "Email campaign", communicator: "Handle replies",
-  inbox_watcher: "Sort my inbox", job_alerts: "Check job alerts", weekly_digest: "Weekly summary", morning: "Morning routine",
+  inbox_watcher: "Sort my inbox", email_finder: "Email finder", job_alerts: "Check job alerts", weekly_digest: "Weekly summary", morning: "Morning routine",
 };
 const MEMBER = new Set(["job_scout", "job_analyst", "researcher", "writer", "applicant"]);  // started by the Orchestrator
 const TONE = { done: "ok", failed: "bad", dead_letter: "bad", cancelled: "muted", queued: "", running: "brand",
@@ -130,6 +131,9 @@ function AgentPage({ id }) {
           </div>}
         </div>
         {id === "orchestrator" ? <FindJobs onStarted={load} disabled={d.mode === "off"} />
+          : id === "email_finder" ? <div className="card card-pad row-xs" style={{ justifyContent: "space-between" }}>
+            <span className="small-label">Give it company websites on the Email finder page.</span>
+            <Button variant="primary" size="sm" onClick={() => go("finder")}>Open Email finder</Button></div>
           : !MEMBER.has(id) && <RunAgent a={{ id, description: d.agent.description }} onStarted={load} disabled={d.mode === "off"} />}
         <div className="card card-pad">
           <b>Recent runs</b>
