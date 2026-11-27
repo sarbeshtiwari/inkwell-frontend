@@ -4,33 +4,20 @@ import { api } from "../lib/api";
 import { emailOk, fmtDate, phoneOk, today } from "../lib/format";
 import { go } from "../lib/router";
 import { useApp } from "../lib/store";
-import { Badge, Button, Chips, Empty, Field, Icon, Spinner, fail, modal, toast, useDebounced, Pager, usePager } from "../ui/kit";
+import { Badge, Button, Chips, Empty, Icon, Spinner, fail, modal, toast, useDebounced, Pager, usePager } from "../ui/kit";
 import { EmailBadge, SendBadge } from "../ui/shared";
 import { extraCols } from "./Campaign";
 import { AddPanel } from "./contacts/AddPanel";
 import { ImportPanel } from "./contacts/ImportPanel";
 import { SentPanel } from "./contacts/SentPanel";
+import { FilterBuilder, applyRules, buildFields, ruleReady, ruleText } from "./contacts/FilterBuilder";
+import { IncomingShares, ShareDialog, SharedPanel } from "./contacts/Sharing";
 
 const CORE = ["name", "company", "phone", "email"];
 
 const STATUS = ["wa_status", "wa_last", "email_status", "email_last", "email_opened", "replied_at", "reply_intent", "reply_count", "added_at"];
 
 const PH = { name: "Add name", company: "Add company", phone: "Add phone", email: "Add email" };
-
-// Whole days since the contact was added (0 = today), or null for contacts saved before dates were recorded.
-// What kind of inbox an address reaches: hiring (careers@, jobs@, hr@…) or a general one (info@, contact@…).
-const HIRING = /^(careers?|jobs?|hiring|recruit\w*|talent\w*|hr|people|join\w*|apply|applications?|resumes?|cv)([._-]|$)/i;
-
-const GENERAL = /^(hello|hi|info|contact|team|office|mail|enquir\w*|inquir\w*|general|support|sales|admin)([._-]|$)/i;
-
-function addressKind(r) {
-  if (!r.email) return "none";
-  if (r.email_type === "careers") return "hiring";
-  if (r.email_type === "general") return "general";
-  if (r.email_type === "referral") return "person";
-  const local = r.email.split("@")[0];
-  return HIRING.test(local) ? "hiring" : GENERAL.test(local) ? "general" : "person";
-}
 
 const STATUS_TESTS = {
   pending: r => !r.wa_status && !r.email_status,
@@ -44,75 +31,38 @@ const STATUS_TESTS = {
 const STATUS_CHIPS = [["", "All"], ["pending", "Not contacted yet"], ["sent", "Messaged"], ["unopened", "Emailed, not opened"],
   ["opened", "Opened email"], ["replied", "Replied"], ["failed", "Failed / bounced"]];
 
-const ADDED = { today: "Today", yesterday: "Yesterday", "7": "Last 7 days", "30": "Last 30 days", older: "Earlier" };
-
-const KINDS = { hiring: "Careers / HR inbox (careers@, hr@…)", general: "General inbox (info@, contact@…)", person: "A person's own email", none: "No email" };
-
-const REACH = { email: "Has email", phone: "Has phone", both: "Has email and phone", email_only: "Email only (no phone)", phone_only: "Phone only (no email)" };
-
-const reachOk = (r, v) => ({ email: !!r.email, phone: !!r.phone, both: !!(r.email && r.phone),
-  email_only: !!r.email && !r.phone, phone_only: !!r.phone && !r.email })[v];
-
-function addedAge(r) {
-  if (!r.added_at) return null;
-  const d = new Date(r.added_at); if (isNaN(d)) return null;
-  const start = x => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
-  return Math.round((start(new Date()) - start(d)) / 86400000);
-}
-
 export default function Contacts() {
   const app = useApp();
   const { data, me, selected, setSelected } = app;
   const [q, setQ] = useState("");
   const [status, setStatus] = useState("");
-  const [stage, setStage] = useState("");
-  const [added, setAdded] = useState("");
-  const [list, setList] = useState("");
-  const [kind, setKind] = useState("");
-  const [reach, setReach] = useState("");
+  // Filter conditions are remembered in this browser, so they survive a reload.
+  const [rules, setRulesRaw] = useState(() => { try { return JSON.parse(localStorage.getItem("contacts.rules") || "[]"); } catch { return []; } });
+  const [match, setMatchRaw] = useState(() => { try { return localStorage.getItem("contacts.match") || "all"; } catch { return "all"; } });
+  const setRules = f => setRulesRaw(rs => { const n = typeof f === "function" ? f(rs) : f; try { localStorage.setItem("contacts.rules", JSON.stringify(n)); } catch { /* private mode */ } return n; });
+  const setMatch = m => { setMatchRaw(m); try { localStorage.setItem("contacts.match", m); } catch { /* private mode */ } };
   const [showFilters, setShowFilters] = useState(false);
+  const [sharing, setSharing] = useState(false);
   const [exporting, setExporting] = useState(false);
-  const lists = useMemo(() => [...new Set(data.recipients.map(r => r.list).filter(Boolean))].sort(), [data.recipients]);
-  const addedCounts = useMemo(() => {
-    const c = { today: 0, yesterday: 0, "7": 0, "30": 0, older: 0 };
-    data.recipients.forEach(r => { const a = addedAge(r); if (a === null) c.older++; else { if (a === 0) c.today++; if (a === 1) c.yesterday++; if (a < 7) c["7"]++; if (a < 30) c["30"]++; } });
-    return c;
-  }, [data.recipients]);
   const [panel, setPanel] = useState(null);
   const [save, setSave] = useState({ text: "", tone: "" });
   const dq = useDebounced(q, 120);
   const cols = [...CORE, ...extraCols(data.recipients)];
 
-  // Every filter except status, so the status chips can show how many each would give.
-  const base = useMemo(() => data.recipients.filter(r => {
+  const fields = useMemo(() => buildFields(data.recipients, me.stages, extraCols(data.recipients).filter(c => c !== "list")), [data.recipients, me.stages]);
+  const ready = rules.filter(r => ruleReady(r, fields));
+  // Search and conditions, but not status, so the status chips can show how many each would give.
+  const base = useMemo(() => {
     const s = dq.trim().toLowerCase();
-    if (s && !Object.entries(r).some(([k, v]) => k !== "id" && String(v).toLowerCase().includes(s))) return false;
-    if (stage && (r.stage || "new") !== stage) return false;
-    if (list && (r.list || "") !== (list === "(none)" ? "" : list)) return false;
-    if (kind && addressKind(r) !== kind) return false;
-    if (reach && !reachOk(r, reach)) return false;
-    if (added) {
-      const a = addedAge(r);
-      if (added === "today" && a !== 0) return false;
-      if (added === "yesterday" && a !== 1) return false;
-      if ((added === "7" || added === "30") && (a === null || a >= +added)) return false;
-      if (added === "older" && a !== null) return false;
-    }
-    return true;
-  }), [data.recipients, dq, stage, added, list, kind, reach]);
+    const hit = s ? data.recipients.filter(r => Object.entries(r).some(([k, v]) => k !== "id" && String(v).toLowerCase().includes(s))) : data.recipients;
+    return applyRules(hit, ready, match, fields);
+  }, [data.recipients, dq, ready, match, fields]);
   const rows = useMemo(() => status ? base.filter(STATUS_TESTS[status]) : base, [base, status]);
   const statusCounts = useMemo(() => Object.fromEntries(STATUS_CHIPS.map(([v]) => [v, v ? base.filter(STATUS_TESTS[v]).length : base.length])), [base]);
-  const pg = usePager(rows, [dq, status, stage, added, list, kind, reach].join("|"), 50);
-  // Filters other than search and status, shown as removable pills.
-  const active = [
-    stage && ["Stage", me.stages[stage] || stage, () => setStage("")],
-    added && ["Added", ADDED[added], () => setAdded("")],
-    list && ["List", list === "(none)" ? "No list" : list, () => setList("")],
-    kind && ["Email type", KINDS[kind], () => setKind("")],
-    reach && ["Contact info", REACH[reach], () => setReach("")],
-  ].filter(Boolean);
-  const filtered = !!(dq || status || active.length);
-  const clearAll = () => { setQ(""); setStatus(""); setStage(""); setAdded(""); setList(""); setKind(""); setReach(""); };
+  const ruleKey = JSON.stringify(ready) + match;
+  const pg = usePager(rows, [dq, status, ruleKey].join("|"), 50);
+  const filtered = !!(dq || status || ready.length);
+  const clearAll = () => { setQ(""); setStatus(""); setRules([]); };
   const exportRows = async () => {
     const pick = selected.size ? rows.filter(r => selected.has(r.id)) : rows;
     if (!pick.length) return toast("No contacts to export", true);
@@ -177,51 +127,37 @@ export default function Contacts() {
     <div>
       <div className="toolbar">
         <div className="search"><Icon name="search" /><input className="input" type="search" placeholder="Search contacts…" value={q} onChange={e => setQ(e.target.value)} aria-label="Search contacts" /></div>
-        <Button icon="filter" className={showFilters || active.length ? "on" : ""} onClick={() => setShowFilters(v => !v)} aria-expanded={showFilters}>
-          Filters{active.length > 0 && <span className="filter-n">{active.length}</span>}</Button>
+        <Button icon="filter" className={showFilters || ready.length ? "on" : ""} onClick={() => setShowFilters(v => !v)} aria-expanded={showFilters}>
+          Filters{ready.length > 0 && <span className="filter-n">{ready.length}</span>}</Button>
         <span className="grow" />
+        <Button icon="users" className={panel === "shared" ? "on" : ""} onClick={() => togglePanel("shared")}>Shared</Button>
         <Button icon="mail" className={panel === "sent" ? "on" : ""} onClick={() => togglePanel("sent")}>Import from Sent mail</Button>
         <Button icon="upload" className={panel === "import" ? "on" : ""} onClick={() => togglePanel("import")}>Import Excel</Button>
-        <Button icon="download" busy={exporting} onClick={exportRows} title={selected.size ? "Download the selected contacts as Excel" : "Download the contacts shown below as Excel"}>
-          Export {selected.size ? `selected (${selected.size})` : filtered ? `${rows.length} shown` : "all"}</Button>
         <Button variant="primary" icon="plus" onClick={() => togglePanel("add")}>Add contact</Button>
       </div>
 
       <div className="contact-status">
         <span className="help">Show</span>
         <Chips value={status} onChange={setStatus} options={STATUS_CHIPS.map(([v, l]) => [v, l, statusCounts[v]])} />
+        <span className="grow" />
+        <Button size="sm" icon="download" busy={exporting} onClick={exportRows} title={selected.size ? "Download the selected contacts as Excel" : "Download the contacts shown below as Excel"}>
+          Export {selected.size ? `selected (${selected.size})` : filtered ? `${rows.length} shown` : "all"}</Button>
       </div>
 
+      <IncomingShares />
+
       <AnimatePresence initial={false}>
-        {showFilters && <motion.div className="card contact-filters" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} style={{ overflow: "hidden" }}>
-          <div className="contact-filters-grid">
-            <Field label="Stage" hint="Where they are in your pipeline">
-              <select className="select" value={stage} onChange={e => setStage(e.target.value)}>
-                <option value="">Any stage</option>{Object.entries(me.stages).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
-            </Field>
-            <Field label="Added" hint="When the contact was added">
-              <select className="select" value={added} onChange={e => setAdded(e.target.value)}>
-                <option value="">Any time</option>{Object.entries(ADDED).map(([k, v]) => <option key={k} value={k}>{v} ({addedCounts[k]})</option>)}</select>
-            </Field>
-            <Field label="List" hint="The import or group they came from">
-              <select className="select" value={list} onChange={e => setList(e.target.value)}>
-                <option value="">Any list</option>{lists.map(l => <option key={l} value={l}>{l}</option>)}<option value="(none)">Not in a list</option></select>
-            </Field>
-            <Field label="Contact info" hint="Which details you have for them">
-              <select className="select" value={reach} onChange={e => setReach(e.target.value)}>
-                <option value="">Anything</option>{Object.entries(REACH).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
-            </Field>
-            <Field label="Email type" hint="Whose inbox the email reaches">
-              <select className="select" value={kind} onChange={e => setKind(e.target.value)}>
-                <option value="">Any email</option>{Object.entries(KINDS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
-            </Field>
-          </div>
+        {showFilters && <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} style={{ overflow: "hidden" }}>
+          <FilterBuilder fields={fields} rules={rules} setRules={setRules} match={match} setMatch={setMatch}
+            matching={rows.length} total={data.recipients.length} onClose={() => setShowFilters(false)} />
         </motion.div>}
       </AnimatePresence>
 
       {filtered && <div className="active-filters">
         <span className="help">{rows.length} of {data.recipients.length} contacts</span>
-        {active.map(([k, v, clear]) => <button key={k} type="button" className="filter-pill" onClick={clear} title="Remove this filter"><span>{k}:</span> {v}<Icon name="x" /></button>)}
+        {ready.map((r, i) => <button key={r.id} type="button" className="filter-pill" onClick={() => setRules(rs => rs.filter(x => x.id !== r.id))} title="Remove this condition">
+          {i > 0 && <span>{match === "any" ? "or" : "and"}</span>}{ruleText(r, fields)}<Icon name="x" /></button>)}
+        {!showFilters && ready.length > 0 && <button type="button" className="link-btn" onClick={() => setShowFilters(true)}>Edit</button>}
         <button type="button" className="link-btn" onClick={clearAll}>Clear all</button>
       </div>}
 
@@ -230,14 +166,18 @@ export default function Contacts() {
           {panel === "add" && <AddPanel onClose={() => setPanel(null)} />}
           {panel === "import" && <ImportPanel onClose={() => setPanel(null)} />}
           {panel === "sent" && <SentPanel onClose={() => setPanel(null)} />}
+          {panel === "shared" && <SharedPanel onClose={() => setPanel(null)} />}
         </motion.div>}
       </AnimatePresence>
+
+      <ShareDialog open={sharing} ids={[...selected]} onClose={() => setSharing(false)} onShared={() => setPanel("shared")} />
 
       <AnimatePresence>
         {selected.size > 0 && (
           <motion.div className="bulkbar" initial={{ opacity: 0, y: -10, scale: .98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -10 }}>
             <b>{selected.size} selected</b><span className="grow" />
             <Button size="sm" icon="send" onClick={() => { app.setCampaignPreset({ who: "selected" }); go("campaign"); }}>Send to selected</Button>
+            <Button size="sm" icon="users" onClick={() => setSharing(true)}>Share with a friend</Button>
             <Button size="sm" icon="refresh" onClick={bulkReset}>Mark not contacted</Button>
             <Button size="sm" variant="danger" icon="trash" onClick={bulkDelete}>Delete</Button>
             <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>Clear</Button>

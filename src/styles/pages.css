@@ -1211,9 +1211,6 @@ pre.ai-kit-answer { white-space: pre-wrap; font: inherit; margin: 0; }
 
 /* ================================================================ contacts filters */
 .contact-status { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
-.contact-filters { margin-bottom: 12px; }
-.contact-filters-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px 16px; padding: 16px; }
-.contact-filters-grid .field { margin: 0; }
 .filter-n { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px; margin-left: 6px; border-radius: 99px; background: var(--accent); color: #fff; font-size: 11px; font-weight: 650; }
 .active-filters { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
 .filter-pill { display: inline-flex; align-items: center; gap: 5px; max-width: 100%; border: 1px solid var(--border); background: var(--muted); color: var(--text); padding: 4px 8px 4px 10px; border-radius: 99px; font-size: 12.5px; cursor: pointer; }
@@ -1221,3 +1218,39 @@ pre.ai-kit-answer { white-space: pre-wrap; font: inherit; margin: 0; }
 .filter-pill:hover { border-color: var(--text-4); }
 .filter-pill svg { width: 13px; height: 13px; color: var(--text-3); }
 @media (max-width: 640px) { .contact-status .chipset { flex-wrap: nowrap; overflow-x: auto; width: 100%; } .chip { white-space: nowrap; } }
+
+/* contacts: condition builder */
+.fb { padding: 14px 16px; margin-bottom: 12px; }
+.fb-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+.fb-empty { margin: 4px 0 10px; }
+.fb-row { display: grid; grid-template-columns: 48px minmax(150px, 200px) minmax(150px, 190px) minmax(0, 1fr) auto; gap: 8px; align-items: start; padding: 8px 0; border-top: 1px dashed var(--border); }
+.fb-row:first-of-type { border-top: 0; }
+.fb-join { padding-top: 10px; font-size: 12.5px; font-weight: 600; color: var(--text-3); text-transform: lowercase; }
+.fb-val { min-width: 0; }
+.fb-pair { display: flex; align-items: center; gap: 8px; }
+.fb-pair .input { min-width: 0; }
+.fb-opts { display: flex; flex-wrap: wrap; gap: 6px; max-height: 150px; overflow: auto; padding: 2px; }
+.fb-opt { display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--border); background: var(--surface); color: var(--text-2); padding: 5px 10px; border-radius: 99px; font-size: 12.5px; cursor: pointer; max-width: 100%; }
+.fb-opt .n { color: var(--text-4); font-variant-numeric: tabular-nums; }
+.fb-opt.on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-text); }
+.fb-opt svg { width: 12px; height: 12px; }
+.fb-foot { display: flex; align-items: center; gap: 14px; padding-top: 10px; }
+@media (max-width: 760px) {
+  .fb-row { grid-template-columns: 1fr auto; }
+  .fb-join { grid-column: 1 / -1; padding-top: 0; }
+  .fb-row > .select, .fb-val { grid-column: 1; }
+  .fb-row > .btn { grid-column: 2; grid-row: 2; }
+}
+
+/* contacts: sharing */
+.share-offer { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px 16px; margin-bottom: 12px; border-color: var(--accent); background: color-mix(in srgb, var(--accent-soft) 45%, var(--surface)); }
+.share-ic { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 10px; background: var(--accent-soft); color: var(--accent-text); flex: none; }
+.share-note { margin: 6px 0 0; font-size: 13.5px; color: var(--text-2); }
+.share-offer .grow { min-width: 200px; }
+.share-form { display: flex; flex-direction: column; gap: 16px; }
+.share-what { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border-radius: var(--r); background: var(--muted); font-size: 13.5px; }
+.share-what span { display: flex; gap: 8px; align-items: flex-start; }
+.share-what svg { width: 15px; height: 15px; flex: none; margin-top: 2px; }
+.share-list { display: flex; flex-direction: column; }
+.share-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--border); flex-wrap: wrap; }
+.share-row:first-child { border-top: 0; }
