@@ -17,6 +17,7 @@ export const NAV = [
     ["templates", "Templates", "message"], ["files", "Files", "file"], ["inbox", "Inbox insights", "inbox"]] },
   { key: "career", group: "Career", icon: "briefcase", items: [["ai-jobs", "AI job match", "sparkles", null, "ai"], ["approvals", "Approvals", "shield", "approvals"], ["nearby", "Companies near me", "globe"], ["learning", "Learning", "book"], ["applications", "Applications", "briefcase", "apps"], ["jobs", "Job matches", "zap", "jobs"], ["posts", "Hiring posts", "message", "queue"]] },
   { key: "website", group: "My website", icon: "globe", items: [["portfolio", "Website & portfolio", "star"], ["leads", "Leads", "inbox", "leads"]] },
+  { key: "admin", group: "Super Admin", icon: "shield", admin: true, items: [["agents", "Agent control", "shield"]] },
 ];
 const HOT = ["replies", "apps", "jobs", "leads", "approvals"]; // counts that mean “new, look at this”
 export const ACCOUNT = [["profile", "Profile & email", "user"], ["settings", "Settings", "settings"]];
@@ -121,7 +122,7 @@ function Sidebar({ active, counts, collapsed, mobileOpen, toggle, openPalette })
 
       <LayoutGroup id="nav">
         <nav className="nav">
-          {NAV.map(g => {
+          {NAV.filter(g => !g.admin || app.me?.role === "super_admin").map(g => {
             const isClosed = g.group && closed.has(g.key) && !collapsed;
             const hasActive = g.items.some(([id]) => id === active);
             const hot = g.items.reduce((n, [, , , k]) => n + (k && HOT.includes(k) ? counts[k] || 0 : 0), 0);
