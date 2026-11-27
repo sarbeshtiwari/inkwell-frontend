@@ -135,8 +135,8 @@ function ApprovalCard({ a, onDone }) {
           }
           const long = v.length > 80 || name === "body";
           return <Field key={key} label={lab}>
-            {long ? <textarea rows={5} value={v} onChange={e => setArgs(x => setAt(x, path, e.target.value))} />
-              : <input value={v} onChange={e => setArgs(x => setAt(x, path, e.target.value))} />}
+            {long ? <textarea className="textarea" rows={5} value={v} onChange={e => setArgs(x => setAt(x, path, e.target.value))} />
+              : <input className="input" value={v} onChange={e => setArgs(x => setAt(x, path, e.target.value))} />}
           </Field>;
         })}
       </div>

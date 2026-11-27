@@ -123,7 +123,7 @@ function Model() {
         <div className="row-2">
           <Field label="Provider"><select className="select" value={f.provider} onChange={e => setF({ ...f, provider: e.target.value })}>
             {d.providers.map(p => <option key={p.id} value={p.id} disabled={!p.key_configured}>{p.label}{p.key_configured ? "" : " (no key on the server)"}</option>)}</select></Field>
-          <Field label="Model"><input value={f.model} placeholder="e.g. claude-sonnet-5-5" onChange={e => setF({ ...f, model: e.target.value })} /></Field>
+          <Field label="Model"><input className="input" value={f.model} placeholder="e.g. claude-sonnet-5-5" onChange={e => setF({ ...f, model: e.target.value })} /></Field>
         </div>
         <div className="row-xs" style={{ justifyContent: "flex-end" }}>
           {d.config && <Button variant="ghost" onClick={() => save(true)}>Use users' own models</Button>}
@@ -160,7 +160,7 @@ function BudgetRow({ label, target, current, onSaved }) {
   return <>
     <b style={{ marginTop: 6 }}>{label}</b>
     <div className="row-3">{LIMITS.map(([k, l]) => <Field key={k} label={l}>
-      <input type="number" min="0" value={v[k]} onChange={e => setV({ ...v, [k]: e.target.value })} /></Field>)}</div>
+      <input className="input" type="number" min="0" value={v[k]} onChange={e => setV({ ...v, [k]: e.target.value })} /></Field>)}</div>
     <div className="row-xs" style={{ justifyContent: "flex-end" }}><Button onClick={save}>Save {label.toLowerCase()}</Button></div>
   </>;
 }
