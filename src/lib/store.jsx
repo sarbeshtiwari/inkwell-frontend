@@ -46,6 +46,7 @@ export function AppProvider({ children }) {
     api("/api/apps").then(d => setCounts(c => ({ ...c, apps: d.apps.filter(a => !a.hidden && ["interview", "shortlisted", "assessment", "offer"].includes(a.status)).length }))).catch(() => {});
     api("/api/jobs").then(d => setCounts(c => ({ ...c, jobs: d.jobs.filter(j => j.eligible && !["dismissed", "applied"].includes(j.state)).length }))).catch(() => {});
     api("/api/queue").then(d => setCounts(c => ({ ...c, queue: d.items.filter(i => i.status === "queued").length }))).catch(() => {});
+    api("/api/agents/approvals?status=pending").then(d => setCounts(c => ({ ...c, approvals: d.approvals.length }))).catch(() => {});
     api("/api/naukri").then(d => setLinks(l => ({ ...l, naukri: d.connected }))).catch(() => {});
     api("/api/li/status").then(d => setLinks(l => ({ ...l, linkedin: d.connected }))).catch(() => {});
     api("/api/gh/status").then(d => setLinks(l => ({ ...l, github: d.connected }))).catch(() => {});
