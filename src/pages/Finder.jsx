@@ -1,8 +1,10 @@
+import { AnimatePresence } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { api, upload } from "../lib/api";
 import { go } from "../lib/router";
 import { useApp } from "../lib/store";
 import { Alert, Badge, Button, Check, Empty, Field, Icon, Seg, fail, toast } from "../ui/kit";
+import { FinderProgress } from "./agents/FinderProgress";
 
 const KIND = { hr: ["HR", "brand"], careers: ["Careers", "ok"], hiring: ["Recruiting", "warn"] };
 const blank = () => ({ company: "", website: "" });
@@ -79,7 +81,6 @@ export default function Finder() {
     a.download = "hiring-emails.csv"; a.click(); URL.revokeObjectURL(a.href);
   };
 
-  const pct = d?.total ? Math.round((d.done / d.total) * 100) : 0;
   const noHits = (d?.results || []).filter(s => !s.emails.length);
 
   return (
@@ -121,17 +122,7 @@ export default function Finder() {
         </div>
       </div>
 
-      {running && (
-        <div className="card card-pad finder-progress">
-          <div className="finder-progress-head">
-            <b>Checking websites… {d.done} of {d.total}</b>
-            <span className="help">{found.length} address{found.length === 1 ? "" : "es"} found so far</span>
-            <span className="grow" />
-            <Button icon="stop" onClick={stop}>Stop</Button>
-          </div>
-          <div className="progress"><div style={{ width: `${Math.max(pct, 3)}%` }} /></div>
-        </div>
-      )}
+      <AnimatePresence>{running && <FinderProgress key="fp" d={d} found={found.length} onStop={stop} />}</AnimatePresence>
 
       {d && d.state !== "idle" && (
         <div className="card table-card finder-results">
