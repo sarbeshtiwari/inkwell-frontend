@@ -4,7 +4,7 @@ import { api } from "../lib/api";
 import { emailOk, fmtDate, phoneOk, today } from "../lib/format";
 import { go } from "../lib/router";
 import { useApp } from "../lib/store";
-import { Badge, Button, Empty, Icon, Spinner, fail, modal, toast, useDebounced, Pager, usePager } from "../ui/kit";
+import { Badge, Button, Chips, Empty, Field, Icon, Spinner, fail, modal, toast, useDebounced, Pager, usePager } from "../ui/kit";
 import { EmailBadge, SendBadge } from "../ui/shared";
 import { extraCols } from "./Campaign";
 import { AddPanel } from "./contacts/AddPanel";
@@ -32,6 +32,27 @@ function addressKind(r) {
   return HIRING.test(local) ? "hiring" : GENERAL.test(local) ? "general" : "person";
 }
 
+const STATUS_TESTS = {
+  pending: r => !r.wa_status && !r.email_status,
+  sent: r => r.wa_status === "sent" || r.email_status === "sent",
+  opened: r => !!r.email_opened,
+  unopened: r => r.email_status === "sent" && !r.email_opened,
+  replied: r => !!r.replied_at,
+  failed: r => ["failed", "not_on_whatsapp"].includes(r.wa_status) || ["failed", "bounced", "invalid"].includes(r.email_status),
+};
+
+const STATUS_CHIPS = [["", "All"], ["pending", "Not contacted yet"], ["sent", "Messaged"], ["unopened", "Emailed, not opened"],
+  ["opened", "Opened email"], ["replied", "Replied"], ["failed", "Failed / bounced"]];
+
+const ADDED = { today: "Today", yesterday: "Yesterday", "7": "Last 7 days", "30": "Last 30 days", older: "Earlier" };
+
+const KINDS = { hiring: "Careers / HR inbox (careers@, hr@…)", general: "General inbox (info@, contact@…)", person: "A person's own email", none: "No email" };
+
+const REACH = { email: "Has email", phone: "Has phone", both: "Has email and phone", email_only: "Email only (no phone)", phone_only: "Phone only (no email)" };
+
+const reachOk = (r, v) => ({ email: !!r.email, phone: !!r.phone, both: !!(r.email && r.phone),
+  email_only: !!r.email && !r.phone, phone_only: !!r.phone && !r.email })[v];
+
 function addedAge(r) {
   if (!r.added_at) return null;
   const d = new Date(r.added_at); if (isNaN(d)) return null;
@@ -48,6 +69,9 @@ export default function Contacts() {
   const [added, setAdded] = useState("");
   const [list, setList] = useState("");
   const [kind, setKind] = useState("");
+  const [reach, setReach] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const lists = useMemo(() => [...new Set(data.recipients.map(r => r.list).filter(Boolean))].sort(), [data.recipients]);
   const addedCounts = useMemo(() => {
     const c = { today: 0, yesterday: 0, "7": 0, "30": 0, older: 0 };
@@ -59,12 +83,14 @@ export default function Contacts() {
   const dq = useDebounced(q, 120);
   const cols = [...CORE, ...extraCols(data.recipients)];
 
-  const rows = useMemo(() => data.recipients.filter(r => {
+  // Every filter except status, so the status chips can show how many each would give.
+  const base = useMemo(() => data.recipients.filter(r => {
     const s = dq.trim().toLowerCase();
     if (s && !Object.entries(r).some(([k, v]) => k !== "id" && String(v).toLowerCase().includes(s))) return false;
     if (stage && (r.stage || "new") !== stage) return false;
     if (list && (r.list || "") !== (list === "(none)" ? "" : list)) return false;
     if (kind && addressKind(r) !== kind) return false;
+    if (reach && !reachOk(r, reach)) return false;
     if (added) {
       const a = addedAge(r);
       if (added === "today" && a !== 0) return false;
@@ -72,16 +98,35 @@ export default function Contacts() {
       if ((added === "7" || added === "30") && (a === null || a >= +added)) return false;
       if (added === "older" && a !== null) return false;
     }
-    if (status === "pending") return !r.wa_status && !r.email_status;
-    if (status === "sent") return r.wa_status === "sent" || r.email_status === "sent";
-    if (status === "failed") return ["failed", "not_on_whatsapp"].includes(r.wa_status) || ["failed", "bounced", "invalid"].includes(r.email_status);
-    if (status === "opened") return !!r.email_opened;
-    if (status === "unopened") return r.email_status === "sent" && !r.email_opened;
-    if (status === "replied") return !!r.replied_at;
     return true;
-  }), [data.recipients, dq, status, stage, added, list, kind]);
-  const pg = usePager(rows, [dq, status, stage, added, list, kind].join("|"), 50);
-  const filtered = !!(dq || status || stage || added || list || kind);
+  }), [data.recipients, dq, stage, added, list, kind, reach]);
+  const rows = useMemo(() => status ? base.filter(STATUS_TESTS[status]) : base, [base, status]);
+  const statusCounts = useMemo(() => Object.fromEntries(STATUS_CHIPS.map(([v]) => [v, v ? base.filter(STATUS_TESTS[v]).length : base.length])), [base]);
+  const pg = usePager(rows, [dq, status, stage, added, list, kind, reach].join("|"), 50);
+  // Filters other than search and status, shown as removable pills.
+  const active = [
+    stage && ["Stage", me.stages[stage] || stage, () => setStage("")],
+    added && ["Added", ADDED[added], () => setAdded("")],
+    list && ["List", list === "(none)" ? "No list" : list, () => setList("")],
+    kind && ["Email type", KINDS[kind], () => setKind("")],
+    reach && ["Contact info", REACH[reach], () => setReach("")],
+  ].filter(Boolean);
+  const filtered = !!(dq || status || active.length);
+  const clearAll = () => { setQ(""); setStatus(""); setStage(""); setAdded(""); setList(""); setKind(""); setReach(""); };
+  const exportRows = async () => {
+    const pick = selected.size ? rows.filter(r => selected.has(r.id)) : rows;
+    if (!pick.length) return toast("No contacts to export", true);
+    setExporting(true);
+    try {
+      const r = await fetch("/api/recipients/export", { method: "POST", headers: { "X-Requested-With": "fetch", "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: pick.map(x => x.id) }) });
+      if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || "Couldn't export. Please try again.");
+      const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(await r.blob()), download: `contacts-${today()}.xlsx` });
+      a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      toast(`Exported ${pick.length} contact${pick.length === 1 ? "" : "s"}`);
+    } catch (err) { fail(err); }
+    setExporting(false);
+  };
   const allOn = rows.length > 0 && rows.every(r => selected.has(r.id));
   const toggleSel = (id, on) => setSelected(s => { const n = new Set(s); on ? n.add(id) : n.delete(id); return n; });
 
@@ -132,37 +177,53 @@ export default function Contacts() {
     <div>
       <div className="toolbar">
         <div className="search"><Icon name="search" /><input className="input" type="search" placeholder="Search contacts…" value={q} onChange={e => setQ(e.target.value)} aria-label="Search contacts" /></div>
-        <select className="select auto" value={status} onChange={e => setStatus(e.target.value)} aria-label="Filter by status">
-          <option value="">All statuses</option><option value="pending">Not contacted</option><option value="sent">Sent</option><option value="replied">Replied</option>
-          <option value="failed">Failed / not on WhatsApp</option><option value="opened">Email opened</option><option value="unopened">Emailed, not opened</option>
-        </select>
-        <select className="select auto" value={stage} onChange={e => setStage(e.target.value)} aria-label="Filter by stage">
-          <option value="">All stages</option>{Object.entries(me.stages).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-        </select>
-        <select className="select auto" value={added} onChange={e => setAdded(e.target.value)} aria-label="Filter by when added">
-          <option value="">Added any time</option>
-          <option value="today">Added today ({addedCounts.today})</option>
-          <option value="yesterday">Added yesterday ({addedCounts.yesterday})</option>
-          <option value="7">Added in the last 7 days ({addedCounts["7"]})</option>
-          <option value="30">Added in the last 30 days ({addedCounts["30"]})</option>
-          <option value="older">Added earlier ({addedCounts.older})</option>
-        </select>
-        {lists.length > 0 && <select className="select auto" value={list} onChange={e => setList(e.target.value)} aria-label="Filter by list">
-          <option value="">All lists</option>{lists.map(l => <option key={l} value={l}>{l}</option>)}<option value="(none)">No list</option>
-        </select>}
-        <select className="select auto" value={kind} onChange={e => setKind(e.target.value)} aria-label="Filter by email address type">
-          <option value="">Any address</option>
-          <option value="hiring">Careers / HR address</option>
-          <option value="general">General address (info@, contact@…)</option>
-          <option value="person">A person (referral)</option>
-          <option value="none">No email</option>
-        </select>
-        {filtered && <Button variant="ghost" size="sm" icon="x" onClick={() => { setQ(""); setStatus(""); setStage(""); setAdded(""); setList(""); setKind(""); }}>Clear</Button>}
+        <Button icon="filter" className={showFilters || active.length ? "on" : ""} onClick={() => setShowFilters(v => !v)} aria-expanded={showFilters}>
+          Filters{active.length > 0 && <span className="filter-n">{active.length}</span>}</Button>
         <span className="grow" />
         <Button icon="mail" className={panel === "sent" ? "on" : ""} onClick={() => togglePanel("sent")}>Import from Sent mail</Button>
         <Button icon="upload" className={panel === "import" ? "on" : ""} onClick={() => togglePanel("import")}>Import Excel</Button>
+        <Button icon="download" busy={exporting} onClick={exportRows} title={selected.size ? "Download the selected contacts as Excel" : "Download the contacts shown below as Excel"}>
+          Export {selected.size ? `selected (${selected.size})` : filtered ? `${rows.length} shown` : "all"}</Button>
         <Button variant="primary" icon="plus" onClick={() => togglePanel("add")}>Add contact</Button>
       </div>
+
+      <div className="contact-status">
+        <span className="help">Show</span>
+        <Chips value={status} onChange={setStatus} options={STATUS_CHIPS.map(([v, l]) => [v, l, statusCounts[v]])} />
+      </div>
+
+      <AnimatePresence initial={false}>
+        {showFilters && <motion.div className="card contact-filters" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} style={{ overflow: "hidden" }}>
+          <div className="contact-filters-grid">
+            <Field label="Stage" hint="Where they are in your pipeline">
+              <select className="select" value={stage} onChange={e => setStage(e.target.value)}>
+                <option value="">Any stage</option>{Object.entries(me.stages).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
+            </Field>
+            <Field label="Added" hint="When the contact was added">
+              <select className="select" value={added} onChange={e => setAdded(e.target.value)}>
+                <option value="">Any time</option>{Object.entries(ADDED).map(([k, v]) => <option key={k} value={k}>{v} ({addedCounts[k]})</option>)}</select>
+            </Field>
+            <Field label="List" hint="The import or group they came from">
+              <select className="select" value={list} onChange={e => setList(e.target.value)}>
+                <option value="">Any list</option>{lists.map(l => <option key={l} value={l}>{l}</option>)}<option value="(none)">Not in a list</option></select>
+            </Field>
+            <Field label="Contact info" hint="Which details you have for them">
+              <select className="select" value={reach} onChange={e => setReach(e.target.value)}>
+                <option value="">Anything</option>{Object.entries(REACH).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
+            </Field>
+            <Field label="Email type" hint="Whose inbox the email reaches">
+              <select className="select" value={kind} onChange={e => setKind(e.target.value)}>
+                <option value="">Any email</option>{Object.entries(KINDS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
+            </Field>
+          </div>
+        </motion.div>}
+      </AnimatePresence>
+
+      {filtered && <div className="active-filters">
+        <span className="help">{rows.length} of {data.recipients.length} contacts</span>
+        {active.map(([k, v, clear]) => <button key={k} type="button" className="filter-pill" onClick={clear} title="Remove this filter"><span>{k}:</span> {v}<Icon name="x" /></button>)}
+        <button type="button" className="link-btn" onClick={clearAll}>Clear all</button>
+      </div>}
 
       <AnimatePresence mode="wait">
         {panel && <motion.div key={panel} initial={{ opacity: 0, height: 0, y: -8 }} animate={{ opacity: 1, height: "auto", y: 0 }} exit={{ opacity: 0, height: 0 }} style={{ overflow: "hidden" }}>
@@ -209,7 +270,7 @@ export default function Contacts() {
                 </motion.tr>
               ))}
               {!data.recipients.length && <tr><td colSpan={cols.length + 6}><Empty icon="users" title="No contacts yet" action={<Button size="sm" onClick={() => setPanel("import")}>Import a spreadsheet</Button>}>Import an Excel or CSV file. Columns like "Name", "Mobile No." or "Email ID" are recognised automatically.</Empty></td></tr>}
-              {data.recipients.length > 0 && !rows.length && <tr><td colSpan={cols.length + 6}><Empty icon="search" title="No contacts match" action={<button className="link-btn" onClick={() => { setQ(""); setStatus(""); setStage(""); }}>Clear the filters</button>} /></td></tr>}
+              {data.recipients.length > 0 && !rows.length && <tr><td colSpan={cols.length + 6}><Empty icon="search" title="No contacts match" action={<button className="link-btn" onClick={clearAll}>Clear the filters</button>} /></td></tr>}
             </tbody>
           </table>
         </div>
@@ -220,7 +281,6 @@ export default function Contacts() {
             {save.tone === "busy" ? <Spinner size={12} /> : <Icon name={save.tone === "err" ? "alert" : "check"} />}{save.text}</motion.span>}</AnimatePresence>
           <span className="grow" />
           <Button size="sm" variant="ghost" icon="columns" onClick={addColumn}>Add column</Button>
-          <a className="btn btn-sm btn-ghost" href="/api/recipients/export"><Icon name="download" />Export</a>
         </div>
       </div>
     </div>
