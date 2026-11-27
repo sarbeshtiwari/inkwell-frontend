@@ -10,10 +10,10 @@ import { ExtensionDrawer } from "./ai-jobs/ExtensionDrawer";
 import { FollowupsDrawer } from "./ai-jobs/FollowupsDrawer";
 import { KitDrawer } from "./ai-jobs/KitDrawer";
 import { LiveView } from "./ai-jobs/LiveView";
+import { MatchProgress } from "./ai-jobs/MatchProgress";
 import { ReportDrawer, TIER_LABEL, scoreTone } from "./ai-jobs/ReportDrawer";
 import { SOURCES, tone } from "./ai-jobs/shared";
 
-const STEPS = ["Reading your resume", "Searching", "Ranking matches", "Done"];
 
 const TIER = { "High Confidence": "ok", "Proceed with Caution": "warn", Suspicious: "bad", Closed: "bad" };
 
@@ -110,7 +110,6 @@ export default function AIJobs() {
     catch (x) { x.field === "consent" ? setApplyOpen(true) : fail(x); }
     setBusy("");
   };
-  const stage = STEPS.indexOf(d?.stage);
   return (
     <div className="ai-page">
       <div className="ai-hero card">
@@ -162,14 +161,7 @@ export default function AIJobs() {
 
       <AnimatePresence>
         {running && (
-          <motion.div className="card card-pad ai-steps" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-            {STEPS.slice(0, 3).map((s, i) => (
-              <div key={s} className={`ai-step ${i < stage ? "done" : i === stage ? "now" : ""}`}>
-                <span className="ai-step-dot">{i < stage ? <Icon name="check" /> : i + 1}</span>{s}
-              </div>
-            ))}
-            {d.skills?.length > 0 && <p className="help">Skills found in your resume: {d.skills.slice(0, 12).join(", ")}</p>}
-          </motion.div>
+          <MatchProgress key="progress" stage={d.stage} skills={d.skills} started={d.started} />
         )}
       </AnimatePresence>
 
