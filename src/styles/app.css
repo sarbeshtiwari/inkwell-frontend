@@ -214,6 +214,24 @@ kbd { font: 600 11px var(--mono); background: var(--muted); border: 1px solid va
 .boot-bar { width: 140px; height: 4px; border-radius: 99px; background: var(--muted); overflow: hidden; }
 .boot-bar span { display: block; width: 40%; height: 100%; border-radius: 99px; background: var(--grad); animation: boot 1s ease-in-out infinite; }
 @keyframes boot { 0% { transform: translateX(-110%); } 100% { transform: translateX(260%); } }
+.boot { gap: 14px; }
+.boot-stage { position: relative; width: 240px; height: 170px; display: grid; place-items: center; }
+.boot-bot { position: absolute; line-height: 0; }
+.boot-bot .robot { filter: drop-shadow(0 4px 6px rgb(0 0 0 / .12)); }
+.boot-bot.b0 { left: 10px; top: 6px; } .boot-bot.b1 { left: 100px; top: -8px; } .boot-bot.b2 { right: 10px; top: 6px; }
+.boot-bot.b3 { left: 10px; bottom: 6px; } .boot-bot.b4 { left: 100px; bottom: -8px; } .boot-bot.b5 { right: 10px; bottom: 6px; }
+.boot-bot > .robot { animation: boot-bob 2s ease-in-out infinite; }
+.boot-bot.b1 > .robot, .boot-bot.b4 > .robot { animation-delay: .3s; } .boot-bot.b2 > .robot, .boot-bot.b5 > .robot { animation-delay: .6s; }
+@keyframes boot-bob { 50% { transform: translateY(-4px); } }
+.boot-draw { fill: none; stroke: #fff; stroke-linecap: round; stroke-linejoin: round; }
+.boot-draw rect, .boot-draw path { stroke-dasharray: 1; stroke-dashoffset: 1; animation: boot-ink .7s ease-out forwards; }
+.boot-draw path:nth-of-type(1) { animation-delay: .35s; }
+.boot-draw .pen { animation-delay: .7s; } .boot-draw .pen + .pen { animation-delay: .95s; }
+@keyframes boot-ink { to { stroke-dashoffset: 0; } }
+.boot-name { font-family: var(--serif, inherit); font-size: 22px; letter-spacing: .01em; }
+.boot-line { height: 20px; font-size: 13px; color: var(--text-3); overflow: hidden; }
+.boot-line span { display: inline-block; }
+@media (prefers-reduced-motion: reduce) { .boot-draw rect, .boot-draw path { animation: none; stroke-dashoffset: 0; } .boot-bot > .robot { animation: none; } }
 .boot-error { min-height: 100dvh; display: grid; place-items: center; }
 
 @media (max-width: 1000px) {
