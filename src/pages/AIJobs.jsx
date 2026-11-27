@@ -7,23 +7,15 @@ import { Alert, Badge, Button, Check, Empty, Field, Icon, Switch, fail, modal, t
 import { AnswersDrawer } from "./ai-jobs/AnswersDrawer";
 import { ApplyDrawer } from "./ai-jobs/ApplyDrawer";
 import { ExtensionDrawer } from "./ai-jobs/ExtensionDrawer";
-import { KeysDrawer } from "./ai-jobs/KeysDrawer";
 import { FollowupsDrawer } from "./ai-jobs/FollowupsDrawer";
-import { InsightsDrawer } from "./ai-jobs/InsightsDrawer";
 import { KitDrawer } from "./ai-jobs/KitDrawer";
 import { LiveView } from "./ai-jobs/LiveView";
 import { ReportDrawer, TIER_LABEL, scoreTone } from "./ai-jobs/ReportDrawer";
-import { RulesDrawer } from "./ai-jobs/RulesDrawer";
-import { CompaniesDrawer } from "./ai-jobs/CompaniesDrawer";
-import { ModelDrawer } from "./ai-jobs/ModelDrawer";
-import { UpdateDrawer } from "./ai-jobs/UpdateDrawer";
-import { FeedbackButtons, LearningDrawer } from "./ai-jobs/LearningDrawer";
 import { SOURCES, tone } from "./ai-jobs/shared";
 
 const STEPS = ["Reading your resume", "Searching", "Ranking matches", "Done"];
 
 const TIER = { "High Confidence": "ok", "Proceed with Caution": "warn", Suspicious: "bad", Closed: "bad" };
-const KEYLESS = ["career_sites", "remote_boards"];
 
 const MODE_LABEL = { board: "Auto-apply ready", site: "Auto-apply on company site", account: "Watch mode: needs your sign-in" };
 const MODE_HINT = { site: "Inkwell finds the application form on the company's own site and fills it; it hands back anything only you can do.",
@@ -39,7 +31,6 @@ export default function AIJobs() {
   const [err, setErr] = useState({});
   const [busy, setBusy] = useState("");
   const [picked, setPicked] = useState(new Set());
-  const [keysOpen, setKeysOpen] = useState(false);
   const [applyOpen, setApplyOpen] = useState(false);
   const [minScore, setMinScore] = useState(0);
   const [watchWindow, setWatchWindow] = useState(true);
@@ -48,15 +39,7 @@ export default function AIJobs() {
   const [answersOpen, setAnswersOpen] = useState(null); // null = closed; {} = open; {question, company} = open with a new answer
   const [answers, setAnswers] = useState([]);
   const [reportFor, setReportFor] = useState(null);
-  const [rulesOpen, setRulesOpen] = useState(false);
   const [fuOpen, setFuOpen] = useState(false);
-  const [insOpen, setInsOpen] = useState(false);
-  const [modelOpen, setModelOpen] = useState(false);
-  const [coOpen, setCoOpen] = useState(false);
-  const [updOpen, setUpdOpen] = useState(false);
-  const [learnOpen, setLearnOpen] = useState(false);
-  const [canUpdate, setCanUpdate] = useState(false);
-  useEffect(() => { api("/api/update/progress").then(r => setCanUpdate(r.enabled)).catch(() => {}); }, []);
   const [hideSkipped, setHideSkipped] = useState(true);
   const loadAnswers = () => api("/api/ai-jobs/answers").then(r => setAnswers(r.answers)).catch(() => {});
   useEffect(() => { loadAnswers(); }, []);
@@ -88,11 +71,10 @@ export default function AIJobs() {
     try {
       await api("/api/ai-jobs/match", { json: { ...f, years: Math.round(+f.years), sources, use_llm: useLlm } });
       setPicked(new Set()); load();
-    } catch (x) { x.field && x.field !== "sources" ? setErr({ [x.field]: x.message }) : fail(x); if (x.field === "sources") setKeysOpen(true); }
+    } catch (x) { x.field && x.field !== "sources" ? setErr({ [x.field]: x.message }) : fail(x); }
     setBusy("");
   };
   const toggleSource = id => {
-    if (!KEYLESS.includes(id) && !d?.keys?.[id] && !sources.includes(id)) { setKeysOpen(true); return; }
     setSources(s => s.includes(id) ? (s.length > 1 ? s.filter(x => x !== id) : s) : [...s, id]);
   };
 
@@ -119,13 +101,8 @@ export default function AIJobs() {
         ? "A browser window opens and each job gets its own tab: Inkwell AI fills the form and submits it. Where you're needed (signing in, creating an account, a question only you can answer, a CAPTCHA) it pauses with a bar at the bottom of the page; do that part, then press Continue."
         : "Inkwell AI fills each public application form with your resume and details and submits it. Forms with questions only you can answer, or a CAPTCHA, are handed back to you. You can watch it live on this page." })) return;
     setBusy("apply");
-    try { await api("/api/ai-jobs/apply", { json: { ids, watch: watchWindow, anyway } }); setPicked(new Set()); toast("Applying… watch it live below."); load(); }
+    try { await api("/api/ai-jobs/apply", { json: { ids, watch: watchWindow } }); setPicked(new Set()); toast("Applying… watch it live below."); load(); }
     catch (x) {
-      if (x.field === "rules") {
-        setBusy("");
-        if (await modal({ title: "Some picks break your rules", text: x.message, confirm: "Apply anyway", danger: true })) applyNow(true);
-        return;
-      }
       x.field === "consent" || x.field === "phone" ? (x.field === "phone" ? (toast(x.message, true), go("profile")) : setApplyOpen(true)) : fail(x);
     }
     setBusy("");
@@ -171,21 +148,12 @@ export default function AIJobs() {
           {SOURCES.map(([id, label, hint]) => (
             <button key={id} type="button" className={`ai-source ${sources.includes(id) ? "on" : ""}`} onClick={() => toggleSource(id)} aria-pressed={sources.includes(id)}>
               <span className="ai-tick"><Icon name="check" /></span>
-              <span><b>{label}</b><small>{!KEYLESS.includes(id) && !d?.keys?.[id] ? "Add your key to use" : hint}</small></span>
+              <span><b>{label}</b><small>{hint}</small></span>
             </button>
           ))}
-          <Button variant="ghost" size="sm" icon="settings" onClick={() => setKeysOpen(true)}>Search keys</Button>
-          <Button variant="ghost" size="sm" icon="flag" onClick={() => setRulesOpen(true)}>My rules</Button>
           <Button variant="ghost" size="sm" icon="bell" onClick={() => setFuOpen(true)}>
             Follow-ups{d?.followups_due > 0 && <span className="ai-review-dot">{d.followups_due} due</span>}
           </Button>
-          <Button variant="ghost" size="sm" icon="trend" onClick={() => setInsOpen(true)}>Insights</Button>
-          <Button variant="ghost" size="sm" icon="star" onClick={() => setLearnOpen(true)}>
-            What it learned{d?.learning?.suggestions > 0 && <span className="ai-review-dot">{d.learning.suggestions} to review</span>}
-          </Button>
-          <Button variant="ghost" size="sm" icon="briefcase" onClick={() => setCoOpen(true)}>My companies</Button>
-          <Button variant="ghost" size="sm" icon="sparkles" onClick={() => setModelOpen(true)}>AI model</Button>
-          {canUpdate && <Button variant="ghost" size="sm" icon="download" onClick={() => setUpdOpen(true)}>Updates</Button>}
           <Button variant="ghost" size="sm" icon="puzzle" onClick={() => setExtOpen(true)}>Browser extension</Button>
           <Button variant="ghost" size="sm" icon="note" onClick={() => { loadAnswers(); setAnswersOpen({}); }}>
             My answers{answers.length ? ` (${answers.length})` : ""}{toReview > 0 && <span className="ai-review-dot">{toReview} to review</span>}
@@ -263,13 +231,11 @@ export default function AIJobs() {
                     {canPick(r) && <Check checked={picked.has(r.id)} onChange={() => toggle(r.id)}><span className="sr-only">Select</span></Check>}
                   </div>
                   {r.ai_verdict && <p className="ai-verdict"><Icon name="sparkles" />{r.ai_verdict}</p>}
-                  {(r.report || r.rules?.length > 0 || r.pay) && <div className="ai-badges">
+                  {(r.report || r.pay) && <div className="ai-badges">
                     {r.report && <Badge tone={TIER[r.report.tier]}>{TIER_LABEL[r.report.tier]}</Badge>}
-                    {r.rules?.map(x => <Badge key={x.rule} tone="bad" title={x.because}>{x.rule}</Badge>)}
                     {r.pay && <Badge dot={false}>{r.pay}</Badge>}
                     {r.remote && r.remote !== "Not stated" && <Badge dot={false}>{r.remote}</Badge>}
                   </div>}
-                  <FeedbackButtons r={r} given={d.feedback?.[r.id]} onDone={load} />
                   <ul className="ai-why">
                     {r.reasons.map(x => <li key={x} className="ok"><Icon name="check" />{x}</li>)}
                     {r.gaps.slice(0, 3).map(x => <li key={x} className="gap"><Icon name="alert" />{/^[A-Z]/.test(x) && !/ /.test(x) ? `Not on your resume: ${x}` : x}</li>)}
@@ -316,16 +282,9 @@ export default function AIJobs() {
 
       <ExtensionDrawer open={extOpen} onClose={() => setExtOpen(false)} />
       <ReportDrawer job={reportFor} onClose={() => setReportFor(null)} onEvaluated={load} onAnswers={q => { setReportFor(null); loadAnswers(); setAnswersOpen(q); }} />
-      <RulesDrawer open={rulesOpen} onClose={() => setRulesOpen(false)} rules={d?.rules} onSaved={rules => setD(x => ({ ...x, rules }))} />
       <FollowupsDrawer open={fuOpen} onClose={() => setFuOpen(false)} onChanged={load} />
-      <InsightsDrawer open={insOpen} onClose={() => setInsOpen(false)} />
-      <ModelDrawer open={modelOpen} onClose={() => setModelOpen(false)} onSaved={load} />
-      <CompaniesDrawer open={coOpen} onClose={() => setCoOpen(false)} />
-      <UpdateDrawer open={updOpen} onClose={() => setUpdOpen(false)} />
-      <LearningDrawer open={learnOpen} onClose={() => setLearnOpen(false)} onChanged={load} />
       <KitDrawer job={kitFor} onClose={() => setKitFor(null)} onAnswers={q => { setKitFor(null); setAnswersOpen(q); }} />
       <AnswersDrawer open={answersOpen} onClose={() => setAnswersOpen(null)} answers={answers} reload={loadAnswers} />
-      <KeysDrawer open={keysOpen} onClose={() => setKeysOpen(false)} keys={d?.keys || {}} onSaved={k => { setD(x => ({ ...x, keys: k })); }} />
       <ApplyDrawer open={applyOpen} onClose={() => setApplyOpen(false)} d={d} me={app.data.profile} onSaved={r => setD(x => ({ ...x, details: r.details, consent: r.consent }))} />
     </div>
   );
