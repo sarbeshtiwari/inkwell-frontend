@@ -907,6 +907,8 @@ a.kpi:hover { border-color: var(--border-strong); box-shadow: var(--shadow-md); 
 .ai-source.on { border-color: color-mix(in srgb, var(--violet) 55%, var(--border)); background: color-mix(in srgb, var(--violet) 6%, var(--surface)); }
 .ai-tick { width: 18px; height: 18px; flex: none; border-radius: 6px; border: 1.5px solid var(--border-strong); display: grid; place-items: center; color: transparent; }
 .ai-tick .i { width: 12px; height: 12px; }
+.ai-source.fixed { cursor: default; }
+.ai-source.fixed:hover { border-color: color-mix(in srgb, var(--violet) 55%, var(--border)); }
 .ai-source.on .ai-tick { background: var(--ai-grad); border-color: transparent; color: #fff; }
 .ai-actions { display: flex; align-items: center; gap: 12px; margin-top: 18px; flex-wrap: wrap; }
 .ai-actions .btn-primary, .ai-results .toolbar .btn-primary { background: var(--ai-grad); border-color: transparent; }

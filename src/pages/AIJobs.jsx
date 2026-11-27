@@ -26,7 +26,6 @@ export default function AIJobs() {
   const app = useApp();
   const [d, setD] = useState(null);
   const [f, setF] = useState({ role: "", years: "", company: "", location: "", resume: "" });
-  const [sources, setSources] = useState(["career_sites"]);
   const [useLlm, setUseLlm] = useState(true);
   const [err, setErr] = useState({});
   const [busy, setBusy] = useState("");
@@ -69,13 +68,10 @@ export default function AIJobs() {
     if (Object.keys(e).length) return;
     setBusy("start");
     try {
-      await api("/api/ai-jobs/match", { json: { ...f, years: Math.round(+f.years), sources, use_llm: useLlm } });
+      await api("/api/ai-jobs/match", { json: { ...f, years: Math.round(+f.years), use_llm: useLlm } });
       setPicked(new Set()); load();
-    } catch (x) { x.field && x.field !== "sources" ? setErr({ [x.field]: x.message }) : fail(x); }
+    } catch (x) { x.field ? setErr({ [x.field]: x.message }) : fail(x); }
     setBusy("");
-  };
-  const toggleSource = id => {
-    setSources(s => s.includes(id) ? (s.length > 1 ? s.filter(x => x !== id) : s) : [...s, id]);
   };
 
   const skipped = (d?.results || []).filter(r => ["skip", "discarded"].includes(r.status)).length;
@@ -145,12 +141,10 @@ export default function AIJobs() {
         </div>
         <div className="ai-sources">
           <span className="small-label">SEARCH WITH</span>
-          {SOURCES.map(([id, label, hint]) => (
-            <button key={id} type="button" className={`ai-source ${sources.includes(id) ? "on" : ""}`} onClick={() => toggleSource(id)} aria-pressed={sources.includes(id)}>
-              <span className="ai-tick"><Icon name="check" /></span>
-              <span><b>{label}</b><small>{hint}</small></span>
-            </button>
-          ))}
+          <div className="ai-source on fixed">
+            <span className="ai-tick"><Icon name="check" /></span>
+            <span><b>{SOURCES.map(s => s[0]).join(" + ")}</b><small>{SOURCES.map(s => s[1]).join(" · ")}</small></span>
+          </div>
           <Button variant="ghost" size="sm" icon="bell" onClick={() => setFuOpen(true)}>
             Follow-ups{d?.followups_due > 0 && <span className="ai-review-dot">{d.followups_due} due</span>}
           </Button>
