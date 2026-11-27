@@ -2,26 +2,25 @@ import { useCallback, useEffect, useState } from "react";
 import { api } from "../lib/api";
 import { ago } from "../lib/format";
 import { go } from "../lib/router";
-import { Alert, Badge, Button, Drawer, DrawerHead, Empty, Field, Icon, Sk, SkBlock, Switch, fail, toast } from "../ui/kit";
+import { Alert, Badge, Button, Drawer, DrawerHead, Empty, Field, Sk, SkBlock, Switch, fail, toast } from "../ui/kit";
 
-// Your agents as cards (each with its own colour); clicking one opens its own page with what it is doing now, its
-// recent runs and its numbers. What they want to do outside Inkwell waits in Approvals.
-const LOOK = {  // id: [colour, icon, what it does in a few words]
-  orchestrator: ["#6d28d9", "sparkles", "Plans your job search and runs the other agents"],
-  job_scout: ["#0d9488", "search", "Finds open jobs that fit"],
-  job_analyst: ["#2563eb", "trend", "Ranks jobs and checks your rules"],
-  researcher: ["#b45309", "globe", "Looks up companies"],
-  writer: ["#db2777", "note", "Drafts resumes and cover letters"],
-  applicant: ["#16a34a", "briefcase", "Applies after you approve"],
-  communicator: ["#ea580c", "reply", "Handles replies to your emails"],
-  inbox_watcher: ["#0284c7", "inbox", "Sorts your job mail"],
-  outreach: ["#c026d3", "send", "Runs email campaigns"],
-  job_alerts: ["#4f46e5", "zap", "Picks jobs from your alerts"],
-  weekly_digest: ["#65a30d", "calendar", "Your Monday summary"],
-  morning: ["#d97706", "sun", "Your daily mail routine"],
-  email_finder: ["#0f766e", "mail", "Finds hiring emails on company sites"],
+// Your agents in a plain list; clicking one opens its own page with what it is doing now, its recent runs and its
+// numbers. What they want to do outside Inkwell waits in Approvals.
+const ABOUT = {  // what each one does, in a sentence
+  orchestrator: "Takes a role you want, sends the scout and analyst out, and puts the shortlist on AI job match.",
+  job_scout: "Searches company career sites and job boards for open roles in the place you asked for.",
+  job_analyst: "Scores each job against your resume and says why it fits or doesn't.",
+  researcher: "Reads a company's own website for size, team and hiring contacts.",
+  writer: "Reorders your resume and drafts a cover letter for one job. Nothing is sent.",
+  applicant: "Fills in the application form once you've approved it.",
+  communicator: "Reads replies to your emails and drafts an answer for you to approve.",
+  inbox_watcher: "Files interview invites, rejections and recruiter mail as they arrive.",
+  outreach: "Sends a campaign you've written, one person at a time, after you approve it.",
+  job_alerts: "Reads job-alert emails and tells you which new jobs are worth opening.",
+  weekly_digest: "Sends a Monday note: strong matches, follow-ups due and replies.",
+  morning: "Syncs your mail each morning and lists what needs you today.",
+  email_finder: "Finds the hiring addresses companies publish on their own sites.",
 };
-const look = id => LOOK[id] || ["#64748b", "sparkles", ""];
 const NAMES = {
   orchestrator: "Find and prepare applications", outreach: "Email campaign", communicator: "Handle replies",
   inbox_watcher: "Sort my inbox", email_finder: "Email finder", job_alerts: "Check job alerts", weekly_digest: "Weekly summary", morning: "Morning routine",
@@ -31,6 +30,8 @@ const TONE = { done: "ok", failed: "bad", dead_letter: "bad", cancelled: "muted"
   waiting_approval: "warn", waiting_children: "brand" };
 const STATUS = { waiting_approval: "waiting for you", waiting_children: "working", dead_letter: "gave up" };
 const name = id => NAMES[id] || id.replace(/_/g, " ").replace(/^./, c => c.toUpperCase());
+
+const about = id => ABOUT[id] || "";
 
 export default function MyAgents({ route }) {
   return route?.param ? <AgentPage id={route.param} /> : <Overview />;
@@ -51,39 +52,47 @@ function Overview() {
   const busy = id => rows.filter(t => t.agent_id === id && !["done", "failed", "cancelled", "dead_letter"].includes(t.status));
   const last = id => rows.find(t => t.agent_id === id);
   const lead = (agents || []).filter(a => !MEMBER.has(a.id)), team = (agents || []).filter(a => MEMBER.has(a.id));
+  const table = (title, list) => (
+    <div className="card table-card">
+      <div className="card-head"><h3>{title}</h3></div>
+      <div className="table-wrap"><table className="table">
+        <thead><tr><th>Agent</th><th>Now</th><th>Last run</th></tr></thead>
+        <tbody>{list.map(a => <AgentRow key={a.id} a={a} busy={busy(a.id)} last={last(a.id)} />)}</tbody>
+      </table></div>
+    </div>
+  );
   return (
     <div className="stack">
       {mode && <ModeLine mode={mode} />}
-      {!agents ? <div className="ag-grid">{[0, 1, 2, 3].map(i => <div key={i} className="card sk-card" style={{ height: 150 }} />)}</div> : <>
-        <div className="ag-grid">{lead.map(a => <AgentCard key={a.id} a={a} busy={busy(a.id)} last={last(a.id)} />)}</div>
-        <div className="small-label" style={{ marginTop: 4 }}>THE JOB SEARCH TEAM (the Orchestrator runs them)</div>
-        <div className="ag-grid">{team.map(a => <AgentCard key={a.id} a={a} busy={busy(a.id)} last={last(a.id)} />)}</div>
+      {!agents ? <SkBlock h={320} /> : <>
+        {table("Your agents", lead)}
+        {table("Job search team · started by Find and prepare applications", team)}
       </>}
     </div>
   );
 }
 
 function ModeLine({ mode }) {
-  return <Alert tone={mode === "on" ? "ok" : mode === "off" ? "bad" : "info"}>
-    Your agents are <b>{mode}</b>. {mode === "shadow" ? "They look and report what they would do, but change nothing and contact no one." :
-      mode === "on" ? "They can act for you; every message or application still waits in Approvals for your yes." : "They don't run."}
-    {" "}<a href="/app/approvals" onClick={e => { e.preventDefault(); go("approvals"); }}>Change it in Approvals</a>.</Alert>;
+  const text = mode === "on" ? "Agents are on. Anything they'd send or submit waits in Approvals for your yes."
+    : mode === "shadow" ? "Agents are in shadow mode: they look and report what they would do, and change nothing."
+      : "Agents are off.";
+  return <p className="ag-mode">{text} <a href="/app/approvals" onClick={e => { e.preventDefault(); go("approvals"); }}>Change</a></p>;
 }
 
-function AgentCard({ a, busy, last }) {
-  const [color, icon, blurb] = look(a.id);
-  const working = busy.length > 0;
+function AgentRow({ a, busy, last }) {
+  const open = () => go(`my-agents/${a.id}`);
+  const now = busy[0];
   return (
-    <a href={`/app/my-agents/${a.id}`} className="card ag-card" style={{ "--ag": color }}>
-      <div className="ag-top">
-        <span className="ag-ic"><Icon name={icon} /></span>
-        <span className={`ag-dot ${working ? "on" : ""}`} title={working ? "Working" : "Idle"} />
-      </div>
-      <b className="ag-name">{name(a.id)}</b>
-      <span className="ag-blurb">{blurb || a.description}</span>
-      <span className="ag-foot">{working ? `Working · ${STATUS[busy[0].status] || busy[0].status.replace(/_/g, " ")}`
-        : last ? `Last run ${ago(last.created_at)} · ${STATUS[last.status] || last.status.replace(/_/g, " ")}` : "Not run yet"}</span>
-    </a>
+    <tr className="click" onClick={open}>
+      <td>
+        <a href={`/app/my-agents/${a.id}`} onClick={e => { e.preventDefault(); open(); }} className="ag-name">{name(a.id)}</a>
+        <div className="ag-about">{about(a.id) || a.description}</div>
+      </td>
+      <td className="ag-now">{now ? <Badge tone={TONE[now.status]}>{STATUS[now.status] || now.status.replace(/_/g, " ")}</Badge>
+        : <span className="ag-muted">Idle</span>}</td>
+      <td className="ag-last">{last ? <>{ago(last.created_at)} <span className="ag-muted">· {STATUS[last.status] || last.status.replace(/_/g, " ")}</span></>
+        : <span className="ag-muted">Never</span>}</td>
+    </tr>
   );
 }
 
@@ -91,7 +100,6 @@ function AgentPage({ id }) {
   const [d, setD] = useState(null);
   const [err, setErr] = useState("");
   const [open, setOpen] = useState(null);
-  const [color, icon, blurb] = look(id);
   const load = useCallback(() => api(`/api/agents/${id}`).then(r => { setD(r); setErr(""); }).catch(e => setErr(e.message)), [id]);
   useEffect(() => { load(); const t = setInterval(load, 4000); return () => clearInterval(t); }, [load]);
   if (err) return <div className="card"><Empty icon="alert" title="Couldn't load this agent">{err}</Empty></div>;
@@ -99,17 +107,15 @@ function AgentPage({ id }) {
   return (
     <div className="stack">
       <a href="/app/my-agents" className="small-label" onClick={e => { e.preventDefault(); go("my-agents"); }}>← All agents</a>
-      <div className="card card-pad ag-hero" style={{ "--ag": color }}>
-        <span className="ag-ic big"><Icon name={icon} /></span>
-        <div style={{ minWidth: 0 }}>
-          <h2 style={{ margin: 0 }}>{name(id)}</h2>
-          <div className="small-label">{d?.agent.description || blurb}</div>
-          {d && <div className="row-xs" style={{ marginTop: 8, flexWrap: "wrap" }}>
-            <Badge>version {d.agent.version}</Badge><Badge tone={d.mode === "on" ? "ok" : d.mode === "off" ? "bad" : ""}>mode {d.mode}</Badge>
-            {d.agent.paused && <Badge tone="bad">paused by the Super Admin</Badge>}
-            {d.pending_approvals > 0 && <Badge tone="warn">{d.pending_approvals} waiting for your approval</Badge>}
-          </div>}
-        </div>
+      <div className="ag-head">
+        <h2>{name(id)}</h2>
+        <p>{about(id) || d?.agent.description}</p>
+        {d && <div className="ag-meta">
+          Version {d.agent.version} · {d.mode === "on" ? "On" : d.mode === "off" ? "Off" : "Shadow (looks, changes nothing)"}
+          {d.agent.paused && <> · <b className="ag-bad">paused by the Super Admin</b></>}
+          {d.pending_approvals > 0 && <> · <a href="/app/approvals" onClick={e => { e.preventDefault(); go("approvals"); }}>
+            {d.pending_approvals} waiting for your approval</a></>}
+        </div>}
       </div>
       {!d ? <SkBlock h={200} /> : <>
         <div className="kpis four">
@@ -122,7 +128,7 @@ function AgentPage({ id }) {
           <b>Working on now</b>
           {!cur ? <div className="small-label" style={{ marginTop: 8 }}>Nothing right now.</div> : <div className="stack-sm">
             <div className="row-xs" style={{ justifyContent: "space-between" }}>
-              <span><span className="ag-dot on" /> {STATUS[cur.status] || cur.status.replace(/_/g, " ")} · started {ago(cur.created_at)} · attempt {cur.attempts}</span>
+              <span>{STATUS[cur.status] || cur.status.replace(/_/g, " ")} · started {ago(cur.created_at)} · attempt {cur.attempts}</span>
               <Button size="sm" onClick={() => setOpen(cur.id)}>Open</Button>
             </div>
             {cur.doing && <div className="small-label">Current step: {cur.doing_type?.replace(/_/g, " ")} · {cur.doing}</div>}
