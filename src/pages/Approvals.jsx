@@ -14,10 +14,13 @@ const STATUS = {
 };
 const TOOL = {
   "applications.submit": ["Submit a job application", "briefcase"],
+  "replies.send": ["Send a reply email", "reply"],
+  "outreach.send_campaign": ["Send an email campaign", "send"],
 };
 const LABEL = { title: "Role", company: "Company", location: "Location", url: "Job page", apply_url: "Application form",
-  to: "To", body: "Message", subject: "Subject" };
-const READONLY = new Set(["id", "ats", "board"]);
+  to: "To", body: "Message", subject: "Subject", template_id: "Template",
+  recipient_ids: "Sending to", documents: "Attachments" };
+const READONLY = new Set(["id", "ats", "board", "template_id", "recipient_ids", "documents"]);
 
 const toolName = id => (TOOL[id] || [id.replace(/[._]/g, " ")])[0];
 const toolIcon = id => (TOOL[id] || [null, "shield"])[1];
@@ -86,7 +89,8 @@ function ModeSwitch() {
 // The editable leaves of the proposed details: strings only (ids and board names stay as they are).
 function leaves(obj, path = []) {
   return Object.entries(obj || {}).flatMap(([k, v]) =>
-    v && typeof v === "object" && !Array.isArray(v) ? leaves(v, [...path, k]) : typeof v === "string" ? [[[...path, k], v]] : []);
+    v && typeof v === "object" && !Array.isArray(v) ? leaves(v, [...path, k]) : typeof v === "string" ? [[[...path, k], v]]
+      : Array.isArray(v) ? [[[...path, k], k === "recipient_ids" ? `${v.length} contact${v.length === 1 ? "" : "s"}` : v.join(", ") || "none"]] : []);
 }
 const setAt = (obj, path, v) => path.length === 1 ? { ...obj, [path[0]]: v } : { ...obj, [path[0]]: setAt(obj[path[0]], path.slice(1), v) };
 

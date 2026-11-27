@@ -34,6 +34,7 @@ const P = {
   learning: lazy(() => import("./pages/Learning")),
   approvals: lazy(() => import("./pages/Approvals")),
   agents: lazy(() => import("./pages/AgentControl")),
+  "my-agents": lazy(() => import("./pages/MyAgents")),
 };
 export const TITLES = {
   dashboard: ["Dashboard", ""],
@@ -59,6 +60,7 @@ export const TITLES = {
   finder: ["Email finder", "Find the HR and careers email addresses that companies publish on their websites, then save them as contacts."],
   nearby: ["Companies near me", "Every company around you or any place you pick, on a map: what they do, their careers page, open jobs and the HR email they publish."],
   learning: ["Learning", "A 90-day interview course, daily DSA, spaced review of what you studied, and a morning briefing with papers, tech news and your job search."],
+  "my-agents": ["My agents", "Start your agents and follow what they did. Anything they want to send or submit waits in Approvals."],
   agents: ["Agent control", "The Supervisor watching every agent, and every control over it: kill switches, the agents' model and the budgets."],
   approvals: ["Approvals", "What your agents want to do outside Inkwell. Nothing is sent or submitted until you approve it."],
   leads: ["Leads", "Enquiries from the contact form on your website. Reply, add notes and track each one."],
