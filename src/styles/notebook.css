@@ -1,5 +1,5 @@
 /* Notebook design — the look of sarbeshtiwari.vercel.app applied to Inkwell: warm paper, tomato accent, serif headings,
-   handwritten notes, pill buttons that tilt on hover, tape on cards, a highlighter swipe, doodles and an ink cursor trail.
+   handwritten notes, pill buttons that tilt on hover, tape on cards, a highlighter swipe and doodles.
    Loaded after base.css; it only remaps tokens and adds a few decorations, so every page keeps working. */
 
 :root {
@@ -42,7 +42,6 @@
   --hand: "Caveat", "Bradley Hand", "Segoe Print", cursive;
   --ease-spring: cubic-bezier(.34, 1.56, .64, 1);
   --ease-out: cubic-bezier(0, 0, .2, 1);
-  --blend: multiply;
 }
 :root[data-theme="dark"] {
   --paper: #14110e; --paper-tint: #1e1a16; --paper-edge: #2c2620;
@@ -71,7 +70,6 @@
   --shadow-md: 0 12px 28px -10px rgb(0 0 0 / .6);
   --shadow-lg: 0 24px 56px rgb(0 0 0 / .55), 0 8px 18px rgb(0 0 0 / .35);
   --ring: 0 0 0 3px rgb(242 92 59 / .35);
-  --blend: screen;
 }
 
 /* ---- type ---- */
@@ -128,10 +126,6 @@ em { font-style: italic; color: var(--tomato); }
 @keyframes nb-spin { to { transform: rotate(360deg); } }
 @keyframes nb-wobble { 0% { transform: rotate(-4deg); } 33% { transform: rotate(5deg); } 66% { transform: rotate(-2deg); } to { transform: rotate(-4deg); } }
 @media (max-width: 860px) { .doodle { display: none; } }
-
-/* ---- ink cursor trail (desktop pointers only; set up by cursor.js) ---- */
-.blob-cursor { position: fixed; inset: 0; pointer-events: none; z-index: 9999; }
-.blob-cursor i { position: fixed; left: 0; top: 0; border-radius: 50%; mix-blend-mode: var(--blend); will-change: transform; transition: width .22s var(--ease-spring), height .22s var(--ease-spring); }
 
 @media (prefers-reduced-motion: reduce) {
   .ink-mark::after { animation: none; transform: scaleX(1) rotate(-1deg); }
