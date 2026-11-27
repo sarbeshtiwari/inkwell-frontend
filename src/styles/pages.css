@@ -1014,6 +1014,24 @@ a.kpi:hover { border-color: var(--border-strong); box-shadow: var(--shadow-md); 
 .ev-row span { height: 5px; border-radius: 3px; background: var(--border); }
 .ev-row i { height: 7px; border-radius: 4px; width: 0; background: var(--ai-grad, var(--accent)); animation: ev-fill 2.6s ease-out infinite; }
 @keyframes ev-fill { 0% { width: 0; } 40%, 90% { width: var(--w); } 100% { width: var(--w); opacity: .4; } }
+/* auto-apply: a form filling itself in, a resume attached, then sent */
+.apf { position: absolute; right: 18px; top: 14px; width: 128px; padding: 10px; border-radius: 8px; background: var(--surface);
+  box-shadow: 0 8px 18px rgb(0 0 0 / .1); display: grid; gap: 7px; animation: ev-in .45s ease-out, apf-out 3.4s ease-in 2.6s infinite; }
+.apf-field { display: grid; gap: 3px; }
+.apf-field span { width: 40%; height: 4px; border-radius: 2px; background: var(--text-4); opacity: .4; }
+.apf-field i { height: 11px; border-radius: 4px; border: 1px solid var(--border-strong); position: relative; overflow: hidden; }
+.apf-field i::after { content: ""; position: absolute; left: 3px; top: 3px; bottom: 3px; width: 0; border-radius: 2px;
+  background: color-mix(in srgb, var(--violet) 55%, var(--border)); animation: apf-type .6s steps(6) forwards; animation-delay: inherit; }
+@keyframes apf-type { to { width: 70%; } }
+.apf-file { display: flex; align-items: center; gap: 5px; padding: 3px 5px; border-radius: 4px; color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface)); opacity: 0; animation: apf-pop .4s ease-out forwards; }
+.apf-file .i { width: 12px; height: 12px; } .apf-file span { flex: 1; height: 4px; border-radius: 2px; background: currentColor; opacity: .5; }
+@keyframes apf-pop { from { opacity: 0; transform: scale(.7); } to { opacity: 1; transform: none; } }
+.apf-send { justify-self: end; width: 26px; height: 18px; border-radius: 5px; display: grid; place-items: center; color: #fff;
+  background: var(--ai-grad, var(--accent)); animation: apf-press 3.4s ease-in-out infinite; animation-delay: 2.3s; }
+.apf-send .i { width: 11px; height: 11px; }
+@keyframes apf-press { 0%, 8% { transform: scale(1); } 4% { transform: scale(.82); } }
+@keyframes apf-out { 0%, 70% { transform: none; opacity: 1; } 90% { transform: translate(40px, -30px) rotate(8deg) scale(.6); opacity: 0; } 100% { opacity: 0; } }
 @media (max-width: 700px) { .mp { grid-template-columns: 1fr; } }
 @media (prefers-reduced-motion: reduce) { .mp *, .mp *::before { animation: none !important; } }
 .ai-steps { display: flex; gap: 22px; align-items: center; flex-wrap: wrap; }
