@@ -34,6 +34,7 @@ export default function Approvals() {
   if (err) return <div className="card"><Empty icon="alert" title="Couldn't load approvals">{err}</Empty></div>;
   return (
     <div>
+      <ModeSwitch />
       <Alert tone="info" icon="shield" style={{ marginBottom: 14 }}>
         Agents never send a message or submit an application on their own. Each one waits here for your yes, and runs
         exactly once with the details you approve. Requests you don't answer within 2 days expire, and the agent carries
@@ -49,6 +50,35 @@ export default function Approvals() {
           When an agent you started wants to do something outside Inkwell, like submitting an application, it asks here first.
         </Empty></div>}
       </div>
+    </div>
+  );
+}
+
+const MODES = [["off", "Off"], ["shadow", "Shadow"], ["on", "On"]];
+const MODE_HELP = {
+  off: "Agents don't run for your account.",
+  shadow: "Agents look and report what they would do, but change nothing and contact no one.",
+  on: "Agents can act for you. Every message or application still waits here for your approval.",
+};
+
+// Each user decides for their own account how far agents may go.
+function ModeSwitch() {
+  const [mode, setMode] = useState(null);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => { api("/api/agents/mode").then(r => setMode(r.mode)).catch(() => setMode("shadow")); }, []);
+  const change = async m => {
+    if (m === mode || busy) return;
+    setBusy(true);
+    try { const r = await api("/api/agents/mode", { method: "PUT", json: { mode: m } }); setMode(r.mode); toast(`Agents: ${r.mode}`); }
+    catch (e) { fail(e); } finally { setBusy(false); }
+  };
+  return (
+    <div className="card card-pad" style={{ marginBottom: 14 }}>
+      <div className="row-xs" style={{ justifyContent: "space-between", flexWrap: "wrap" }}>
+        <b>Agents for my account</b>
+        {mode ? <Chips value={mode} onChange={change} options={MODES} /> : <Sk w={180} h={28} />}
+      </div>
+      {mode && <div className="small-label" style={{ marginTop: 8 }}>{MODE_HELP[mode]}</div>}
     </div>
   );
 }
