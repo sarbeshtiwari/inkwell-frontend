@@ -2,34 +2,18 @@ import { useCallback, useEffect, useState } from "react";
 import { api } from "../lib/api";
 import { ago } from "../lib/format";
 import { go } from "../lib/router";
-import { Alert, Badge, Button, Drawer, DrawerHead, Empty, Field, Icon, Sk, SkBlock, Switch, fail, toast } from "../ui/kit";
+import { Alert, Badge, Button, Drawer, DrawerHead, Empty, Field, Sk, SkBlock, Switch, fail, toast } from "../ui/kit";
 
-// Your agents as cards (each with its own colour); clicking one opens its own page with what it is doing now, its
-// recent runs and its numbers. What they want to do outside Inkwell waits in Approvals.
-const LOOK = {  // id: [colour, icon, what it does in a few words]
-  orchestrator: ["#6d28d9", "sparkles", "Plans your job search and runs the other agents"],
-  job_scout: ["#0d9488", "search", "Finds open jobs that fit"],
-  job_analyst: ["#2563eb", "trend", "Ranks jobs and checks your rules"],
-  researcher: ["#b45309", "globe", "Looks up companies"],
-  writer: ["#db2777", "note", "Drafts resumes and cover letters"],
-  applicant: ["#16a34a", "briefcase", "Applies after you approve"],
-  communicator: ["#ea580c", "reply", "Handles replies to your emails"],
-  inbox_watcher: ["#0284c7", "inbox", "Sorts your job mail"],
-  outreach: ["#c026d3", "send", "Runs email campaigns"],
-  job_alerts: ["#4f46e5", "zap", "Picks jobs from your alerts"],
-  weekly_digest: ["#65a30d", "calendar", "Your Monday summary"],
-  morning: ["#d97706", "sun", "Your daily mail routine"],
-};
-const look = id => LOOK[id] || ["#64748b", "sparkles", ""];
-const NAMES = {
-  orchestrator: "Find and prepare applications", outreach: "Email campaign", communicator: "Handle replies",
-  inbox_watcher: "Sort my inbox", job_alerts: "Check job alerts", weekly_digest: "Weekly summary", morning: "Morning routine",
-};
+import { Robot, agentAbout, agentColor, agentLabel, agentName, agentRole } from "./agents/crew";
+
+// Your crew of agents, each with a name and a robot; clicking one opens their own page with what they are doing now,
+// their recent runs and numbers. What they want to do outside Inkwell waits in Approvals.
 const MEMBER = new Set(["job_scout", "job_analyst", "researcher", "writer", "applicant"]);  // started by the Orchestrator
 const TONE = { done: "ok", failed: "bad", dead_letter: "bad", cancelled: "muted", queued: "", running: "brand",
   waiting_approval: "warn", waiting_children: "brand" };
 const STATUS = { waiting_approval: "waiting for you", waiting_children: "working", dead_letter: "gave up" };
-const name = id => NAMES[id] || id.replace(/_/g, " ").replace(/^./, c => c.toUpperCase());
+const name = agentName;
+const about = agentAbout;
 
 export default function MyAgents({ route }) {
   return route?.param ? <AgentPage id={route.param} /> : <Overview />;
@@ -50,38 +34,42 @@ function Overview() {
   const busy = id => rows.filter(t => t.agent_id === id && !["done", "failed", "cancelled", "dead_letter"].includes(t.status));
   const last = id => rows.find(t => t.agent_id === id);
   const lead = (agents || []).filter(a => !MEMBER.has(a.id)), team = (agents || []).filter(a => MEMBER.has(a.id));
+  const grid = list => <div className="crew-grid">{list.map(a => <AgentCard key={a.id} a={a} busy={busy(a.id)} last={last(a.id)} />)}</div>;
   return (
     <div className="stack">
       {mode && <ModeLine mode={mode} />}
-      {!agents ? <div className="ag-grid">{[0, 1, 2, 3].map(i => <div key={i} className="card sk-card" style={{ height: 150 }} />)}</div> : <>
-        <div className="ag-grid">{lead.map(a => <AgentCard key={a.id} a={a} busy={busy(a.id)} last={last(a.id)} />)}</div>
-        <div className="small-label" style={{ marginTop: 4 }}>THE JOB SEARCH TEAM (the Orchestrator runs them)</div>
-        <div className="ag-grid">{team.map(a => <AgentCard key={a.id} a={a} busy={busy(a.id)} last={last(a.id)} />)}</div>
+      {!agents ? <div className="crew-grid">{[0, 1, 2, 3].map(i => <div key={i} className="card sk-card" style={{ height: 190 }} />)}</div> : <>
+        <h3 className="sec-title">Your crew</h3>
+        {grid(lead)}
+        <h3 className="sec-title">Maya's job search team <span className="crew-sub">she sends them out when you look for jobs</span></h3>
+        {grid(team)}
       </>}
     </div>
   );
 }
 
 function ModeLine({ mode }) {
-  return <Alert tone={mode === "on" ? "ok" : mode === "off" ? "bad" : "info"}>
-    Your agents are <b>{mode}</b>. {mode === "shadow" ? "They look and report what they would do, but change nothing and contact no one." :
-      mode === "on" ? "They can act for you; every message or application still waits in Approvals for your yes." : "They don't run."}
-    {" "}<a href="/app/approvals" onClick={e => { e.preventDefault(); go("approvals"); }}>Change it in Approvals</a>.</Alert>;
+  const text = mode === "on" ? "Agents are on. Anything they'd send or submit waits in Approvals for your yes."
+    : mode === "shadow" ? "Agents are in shadow mode: they look and report what they would do, and change nothing."
+      : "Agents are off.";
+  return <p className="ag-mode">{text} <a href="/app/approvals" onClick={e => { e.preventDefault(); go("approvals"); }}>Change</a></p>;
 }
 
 function AgentCard({ a, busy, last }) {
-  const [color, icon, blurb] = look(a.id);
-  const working = busy.length > 0;
+  const now = busy[0];
+  const open = e => { e.preventDefault(); go(`my-agents/${a.id}`); };
   return (
-    <a href={`/app/my-agents/${a.id}`} className="card ag-card" style={{ "--ag": color }}>
-      <div className="ag-top">
-        <span className="ag-ic"><Icon name={icon} /></span>
-        <span className={`ag-dot ${working ? "on" : ""}`} title={working ? "Working" : "Idle"} />
+    <a href={`/app/my-agents/${a.id}`} onClick={open} className={`card crew-card ${now ? "working" : ""}`} style={{ "--rb": agentColor(a.id) }}>
+      <div className="crew-top">
+        <span className="crew-av"><Robot id={a.id} size={64} working={!!now} />{now && <i className="crew-live" />}</span>
+        <div className="crew-who"><b>{agentName(a.id)}</b><span>{agentRole(a.id)}</span></div>
       </div>
-      <b className="ag-name">{name(a.id)}</b>
-      <span className="ag-blurb">{blurb || a.description}</span>
-      <span className="ag-foot">{working ? `Working · ${STATUS[busy[0].status] || busy[0].status.replace(/_/g, " ")}`
-        : last ? `Last run ${ago(last.created_at)} · ${STATUS[last.status] || last.status.replace(/_/g, " ")}` : "Not run yet"}</span>
+      <p className="crew-about">{about(a.id) || a.description}</p>
+      <div className="crew-foot">
+        {now ? <span className="crew-now">Working · {STATUS[now.status] || now.status.replace(/_/g, " ")}</span>
+          : last ? <span>Last worked {ago(last.created_at)} · {STATUS[last.status] || last.status.replace(/_/g, " ")}</span>
+            : <span>Hasn't worked yet</span>}
+      </div>
     </a>
   );
 }
@@ -90,7 +78,6 @@ function AgentPage({ id }) {
   const [d, setD] = useState(null);
   const [err, setErr] = useState("");
   const [open, setOpen] = useState(null);
-  const [color, icon, blurb] = look(id);
   const load = useCallback(() => api(`/api/agents/${id}`).then(r => { setD(r); setErr(""); }).catch(e => setErr(e.message)), [id]);
   useEffect(() => { load(); const t = setInterval(load, 4000); return () => clearInterval(t); }, [load]);
   if (err) return <div className="card"><Empty icon="alert" title="Couldn't load this agent">{err}</Empty></div>;
@@ -98,16 +85,17 @@ function AgentPage({ id }) {
   return (
     <div className="stack">
       <a href="/app/my-agents" className="small-label" onClick={e => { e.preventDefault(); go("my-agents"); }}>← All agents</a>
-      <div className="card card-pad ag-hero" style={{ "--ag": color }}>
-        <span className="ag-ic big"><Icon name={icon} /></span>
+      <div className="ag-head" style={{ "--rb": agentColor(id) }}>
+        <Robot id={id} size={92} working={!!cur} />
         <div style={{ minWidth: 0 }}>
-          <h2 style={{ margin: 0 }}>{name(id)}</h2>
-          <div className="small-label">{d?.agent.description || blurb}</div>
-          {d && <div className="row-xs" style={{ marginTop: 8, flexWrap: "wrap" }}>
-            <Badge>version {d.agent.version}</Badge><Badge tone={d.mode === "on" ? "ok" : d.mode === "off" ? "bad" : ""}>mode {d.mode}</Badge>
-            {d.agent.paused && <Badge tone="bad">paused by the Super Admin</Badge>}
-            {d.pending_approvals > 0 && <Badge tone="warn">{d.pending_approvals} waiting for your approval</Badge>}
-          </div>}
+        <h2>{agentName(id)} <span className="crew-role">{agentRole(id)}</span></h2>
+        <p>{about(id) || d?.agent.description}</p>
+        {d && <div className="ag-meta">
+          Version {d.agent.version} · {d.mode === "on" ? "On" : d.mode === "off" ? "Off" : "Shadow (looks, changes nothing)"}
+          {d.agent.paused && <> · <b className="ag-bad">paused by the Super Admin</b></>}
+          {d.pending_approvals > 0 && <> · <a href="/app/approvals" onClick={e => { e.preventDefault(); go("approvals"); }}>
+            {d.pending_approvals} waiting for your approval</a></>}
+        </div>}
         </div>
       </div>
       {!d ? <SkBlock h={200} /> : <>
@@ -121,7 +109,7 @@ function AgentPage({ id }) {
           <b>Working on now</b>
           {!cur ? <div className="small-label" style={{ marginTop: 8 }}>Nothing right now.</div> : <div className="stack-sm">
             <div className="row-xs" style={{ justifyContent: "space-between" }}>
-              <span><span className="ag-dot on" /> {STATUS[cur.status] || cur.status.replace(/_/g, " ")} · started {ago(cur.created_at)} · attempt {cur.attempts}</span>
+              <span>{STATUS[cur.status] || cur.status.replace(/_/g, " ")} · started {ago(cur.created_at)} · attempt {cur.attempts}</span>
               <Button size="sm" onClick={() => setOpen(cur.id)}>Open</Button>
             </div>
             {cur.doing && <div className="small-label">Current step: {cur.doing_type?.replace(/_/g, " ")} · {cur.doing}</div>}
@@ -130,6 +118,9 @@ function AgentPage({ id }) {
           </div>}
         </div>
         {id === "orchestrator" ? <FindJobs onStarted={load} disabled={d.mode === "off"} />
+          : id === "email_finder" ? <div className="card card-pad row-xs" style={{ justifyContent: "space-between" }}>
+            <span className="small-label">Give it company websites on the Email finder page.</span>
+            <Button variant="primary" size="sm" onClick={() => go("finder")}>Open Email finder</Button></div>
           : !MEMBER.has(id) && <RunAgent a={{ id, description: d.agent.description }} onStarted={load} disabled={d.mode === "off"} />}
         <div className="card card-pad">
           <b>Recent runs</b>
@@ -170,8 +161,8 @@ function FindJobs({ onStarted, disabled }) {
   };
   return (
     <div className="card card-pad">
-      <b>{NAMES.orchestrator}</b>
-      <div className="small-label" style={{ marginTop: 4 }}>The Orchestrator plans it: the Job Scout searches, the Job Analyst ranks and checks your rules, the Researcher looks up companies, the Writer drafts, the Applicant applies after you approve each one.</div>
+      <b>Give Maya a job search</b>
+      <div className="small-label" style={{ marginTop: 4 }}>Maya plans it: Arjun searches, Priya ranks, Kabir looks up companies, Ira drafts, and Dev applies after you approve each one.</div>
       <div className="stack-sm">
         <Field label="Goal (optional)"><input className="input" value={f.goal} placeholder="e.g. 5 remote backend roles at product companies" onChange={set("goal")} /></Field>
         <div className="row-3">
@@ -217,7 +208,7 @@ function RunDetail({ id, onClose }) {
   const cancel = async () => { try { await api(`/api/agents/tasks/${id}/cancel`, { json: {} }); toast("Stopping at its next step"); onClose(); } catch (e) { fail(e); } };
   const t = d?.task, rep = t?.result?.report;
   return <>
-    <DrawerHead title={t ? name(t.agent_id) : "Agent run"} onClose={onClose} />
+    <DrawerHead title={t ? agentLabel(t.agent_id) : "Agent run"} onClose={onClose} />
     {!t ? <Sk w="60%" /> : <div className="stack" style={{ padding: 16 }}>
       <div className="row-xs" style={{ justifyContent: "space-between" }}>
         <Badge tone={TONE[t.status]}>{STATUS[t.status] || t.status.replace(/_/g, " ")}</Badge>

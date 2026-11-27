@@ -160,7 +160,7 @@ function TypeBars({ companies, colors, type, setType }) {
   );
 }
 
-function CompanyCard({ c, color, selected, onSelect, onCheck, checking, onTrack, onSave }) {
+function CompanyCard({ c, color, selected, onSelect, onCheck, checking, onSave }) {
   const i = c.info;
   return (
     <article id={`nb-${c.id}`} className={`card nb-card ${selected ? "on" : ""}`} onClick={() => onSelect(c.id)}>
@@ -195,7 +195,6 @@ function CompanyCard({ c, color, selected, onSelect, onCheck, checking, onTrack,
         {!i && <Button size="sm" icon="search" busy={checking} onClick={() => onCheck([c.id])}>Check</Button>}
         {i?.emails?.length > 0 && <Button size="sm" variant="ghost" icon="plus" onClick={() => onSave(c)}>Save as contact</Button>}
         <ResearchButton name={c.name} website={c.website} jobs={(i?.jobs || []).slice(0, 6)} />
-        {i?.careers && <Button size="sm" variant="ghost" icon="star" onClick={() => onTrack(c)} title="Read this company's jobs in every AI job match search">Track</Button>}
       </div>
     </article>
   );
@@ -232,10 +231,6 @@ export default function Nearby() {
   };
   const check = async ids => {
     try { await api("/api/nearby/check", { json: { ids } }); toast(`Checking ${ids.length} compan${ids.length === 1 ? "y" : "ies"}… this takes a few seconds each.`); load(); }
-    catch (e) { fail(e); }
-  };
-  const track = async c => {
-    try { const r = await api(`/api/nearby/track/${encodeURIComponent(c.id)}`, { json: {} }); toast(`${r.added.name} added to My companies in AI job match`); }
     catch (e) { fail(e); }
   };
   const save = async c => {
@@ -297,7 +292,7 @@ export default function Nearby() {
             {!companies.length ? <Empty icon="globe" title="No companies mapped here yet">OpenStreetMap has few offices tagged around this spot. Try a bigger radius or a nearby business district.</Empty>
               : !shown.length ? <Empty icon="filter" title="Nothing matches these filters" />
               : <div className="nb-list">{shown.map(c => <CompanyCard key={c.id} c={c} color={colors[c.type]} selected={selected === c.id} onSelect={setSelected}
-                onCheck={check} checking={checking} onTrack={track} onSave={save} />)}</div>}
+                onCheck={check} checking={checking} onSave={save} />)}</div>}
             {d.hiring_in_city?.length > 0 && <div className="card card-pad nb-also">
               <b>Also hiring in {d.area.city} (from your AI job matches)</b>
               <ul>{d.hiring_in_city.map(h => <li key={h.company}><b>{h.company}</b>: {h.jobs.map((j, k) => <span key={k}>{k ? ", " : ""}<a href={j.url} target="_blank" rel="noopener noreferrer">{j.title}</a></span>)}</li>)}</ul>

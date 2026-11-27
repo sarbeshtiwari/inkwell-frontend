@@ -4,6 +4,7 @@ import { api } from "../lib/api";
 import { emit, on } from "../lib/bus";
 import { ago, fmtDT, safeHref } from "../lib/format";
 import { Alert, Badge, Button, Chips, Empty, Field, Icon, Sk, fail, toast } from "../ui/kit";
+import { agentLabel } from "./agents/crew";
 
 // What an agent wants to do outside Inkwell waits here: nothing is sent or submitted until you approve it.
 const FILTERS = [["pending", "Waiting for you"], ["", "All"], ["executed", "Done"], ["rejected", "Declined"], ["expired", "Expired"]];
@@ -119,7 +120,7 @@ function ApprovalCard({ a, onDone }) {
     <motion.div layout initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, height: 0 }} className="card card-pad">
       <div className="row-xs" style={{ justifyContent: "space-between", flexWrap: "wrap" }}>
         <div className="row-xs"><Icon name={toolIcon(a.tool_id)} /><b>{toolName(a.tool_id)}</b>
-          {a.agent_id && <span className="small-label">· asked by {a.agent_id.replace(/_/g, " ")}</span>}</div>
+          {a.agent_id && <span className="small-label">· asked by {agentLabel(a.agent_id)}</span>}</div>
         <Badge tone={tone}>{label}</Badge>
       </div>
       <div className="small-label" style={{ marginTop: 6 }}>

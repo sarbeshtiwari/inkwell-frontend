@@ -151,7 +151,7 @@ export default function Finder() {
               <tbody>{shown.map(e => (
                 <tr key={e.email + e.website}>
                   <td><input type="checkbox" aria-label={`Select ${e.email}`} disabled={e.saved} checked={e.saved || picked.has(e.email)} onChange={() => toggle(e.email)} /></td>
-                  <td><b className="mono">{e.email}</b>{e.saved && <> <Badge tone="ok">In contacts</Badge></>}{!e.same_domain && <> <Badge title="This address is on a different domain from the company's website">Other domain</Badge></>}</td>
+                  <td><b className="mono">{e.email}</b>{e.best && <> <Badge tone="brand" title="The Email Finder agent's pick for this company">Agent's pick</Badge></>}{e.saved && <> <Badge tone="ok">In contacts</Badge></>}{!e.same_domain && <> <Badge title="This address is on a different domain from the company's website">Other domain</Badge></>}</td>
                   <td><Badge tone={KIND[e.kind][1]}>{KIND[e.kind][0]}</Badge></td>
                   <td>{e.company}<div className="help">{host(e.website)}</div></td>
                   <td><a className="link" href={e.page} target="_blank" rel="noopener noreferrer">{(() => { try { return new URL(e.page).pathname; } catch { return e.page; } })()}</a></td>
