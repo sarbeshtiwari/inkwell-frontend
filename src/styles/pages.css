@@ -1001,6 +1001,19 @@ a.kpi:hover { border-color: var(--border-strong); box-shadow: var(--shadow-md); 
 @keyframes fp-lift { 0%, 100% { transform: none; } 30%, 80% { transform: translateY(-26px) scale(1.15); box-shadow: 0 10px 20px rgb(0 0 0 / .16); } }
 .fp-best { position: absolute; left: 72px; top: 0; color: #e0a526; animation: mp-twinkle 3s ease-in-out infinite; }
 .fp-best .i { width: 18px; height: 18px; fill: currentColor; }
+/* evaluation: a report card filling in its five scores */
+.ev-report { position: absolute; right: 18px; top: 14px; width: 128px; padding: 10px; border-radius: 8px; background: var(--surface);
+  box-shadow: 0 8px 18px rgb(0 0 0 / .1); display: grid; gap: 8px; animation: ev-in .45s ease-out; }
+@keyframes ev-in { from { opacity: 0; transform: translateY(14px) rotate(3deg); } }
+.ev-title { display: flex; align-items: center; justify-content: space-between; }
+.ev-title i { width: 60%; height: 7px; border-radius: 3px; background: var(--text-4); opacity: .5; }
+.ev-title b { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: color-mix(in srgb, #e0a526 18%, var(--surface));
+  color: #e0a526; animation: mp-twinkle 2.6s ease-in-out infinite; }
+.ev-title .i { width: 12px; height: 12px; fill: currentColor; }
+.ev-row { display: grid; grid-template-columns: 26px 1fr; gap: 6px; align-items: center; }
+.ev-row span { height: 5px; border-radius: 3px; background: var(--border); }
+.ev-row i { height: 7px; border-radius: 4px; width: 0; background: var(--ai-grad, var(--accent)); animation: ev-fill 2.6s ease-out infinite; }
+@keyframes ev-fill { 0% { width: 0; } 40%, 90% { width: var(--w); } 100% { width: var(--w); opacity: .4; } }
 @media (max-width: 700px) { .mp { grid-template-columns: 1fr; } }
 @media (prefers-reduced-motion: reduce) { .mp *, .mp *::before { animation: none !important; } }
 .ai-steps { display: flex; gap: 22px; align-items: center; flex-wrap: wrap; }

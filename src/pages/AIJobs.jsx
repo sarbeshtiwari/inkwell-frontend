@@ -10,6 +10,7 @@ import { ExtensionDrawer } from "./ai-jobs/ExtensionDrawer";
 import { FollowupsDrawer } from "./ai-jobs/FollowupsDrawer";
 import { KitDrawer } from "./ai-jobs/KitDrawer";
 import { LiveView } from "./ai-jobs/LiveView";
+import { EvalProgress } from "./ai-jobs/EvalProgress";
 import { MatchProgress } from "./ai-jobs/MatchProgress";
 import { ReportDrawer, TIER_LABEL, scoreTone } from "./ai-jobs/ReportDrawer";
 import { SOURCES, tone } from "./ai-jobs/shared";
@@ -165,9 +166,7 @@ export default function AIJobs() {
         )}
       </AnimatePresence>
 
-      {d?.evaluating?.state === "running" && (
-        <Alert tone="info" icon="sparkles">Evaluating… {d.evaluating.done} of {d.evaluating.total}{d.evaluating.current ? `: ${d.evaluating.current}` : ""}</Alert>
-      )}
+      <AnimatePresence>{d?.evaluating?.state === "running" && <EvalProgress key="eval" ev={d.evaluating} />}</AnimatePresence>
 
       {d?.applying?.state === "running" && (
         <Alert tone="info" icon="sparkles">Applying… {d.applying.done} of {d.applying.total}{d.applying.current ? `: ${d.applying.current}` : ""}</Alert>
