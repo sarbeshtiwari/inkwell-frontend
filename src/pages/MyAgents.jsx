@@ -4,34 +4,16 @@ import { ago } from "../lib/format";
 import { go } from "../lib/router";
 import { Alert, Badge, Button, Drawer, DrawerHead, Empty, Field, Sk, SkBlock, Switch, fail, toast } from "../ui/kit";
 
-// Your agents in a plain list; clicking one opens its own page with what it is doing now, its recent runs and its
-// numbers. What they want to do outside Inkwell waits in Approvals.
-const ABOUT = {  // what each one does, in a sentence
-  orchestrator: "Takes a role you want, sends the scout and analyst out, and puts the shortlist on AI job match.",
-  job_scout: "Searches company career sites and job boards for open roles in the place you asked for.",
-  job_analyst: "Scores each job against your resume and says why it fits or doesn't.",
-  researcher: "Reads a company's own website for size, team and hiring contacts.",
-  writer: "Reorders your resume and drafts a cover letter for one job. Nothing is sent.",
-  applicant: "Fills in the application form once you've approved it.",
-  communicator: "Reads replies to your emails and drafts an answer for you to approve.",
-  inbox_watcher: "Files interview invites, rejections and recruiter mail as they arrive.",
-  outreach: "Sends a campaign you've written, one person at a time, after you approve it.",
-  job_alerts: "Reads job-alert emails and tells you which new jobs are worth opening.",
-  weekly_digest: "Sends a Monday note: strong matches, follow-ups due and replies.",
-  morning: "Syncs your mail each morning and lists what needs you today.",
-  email_finder: "Finds the hiring addresses companies publish on their own sites.",
-};
-const NAMES = {
-  orchestrator: "Find and prepare applications", outreach: "Email campaign", communicator: "Handle replies",
-  inbox_watcher: "Sort my inbox", email_finder: "Email finder", job_alerts: "Check job alerts", weekly_digest: "Weekly summary", morning: "Morning routine",
-};
+import { Robot, agentAbout, agentColor, agentLabel, agentName, agentRole } from "./agents/crew";
+
+// Your crew of agents, each with a name and a robot; clicking one opens their own page with what they are doing now,
+// their recent runs and numbers. What they want to do outside Inkwell waits in Approvals.
 const MEMBER = new Set(["job_scout", "job_analyst", "researcher", "writer", "applicant"]);  // started by the Orchestrator
 const TONE = { done: "ok", failed: "bad", dead_letter: "bad", cancelled: "muted", queued: "", running: "brand",
   waiting_approval: "warn", waiting_children: "brand" };
 const STATUS = { waiting_approval: "waiting for you", waiting_children: "working", dead_letter: "gave up" };
-const name = id => NAMES[id] || id.replace(/_/g, " ").replace(/^./, c => c.toUpperCase());
-
-const about = id => ABOUT[id] || "";
+const name = agentName;
+const about = agentAbout;
 
 export default function MyAgents({ route }) {
   return route?.param ? <AgentPage id={route.param} /> : <Overview />;
@@ -52,21 +34,15 @@ function Overview() {
   const busy = id => rows.filter(t => t.agent_id === id && !["done", "failed", "cancelled", "dead_letter"].includes(t.status));
   const last = id => rows.find(t => t.agent_id === id);
   const lead = (agents || []).filter(a => !MEMBER.has(a.id)), team = (agents || []).filter(a => MEMBER.has(a.id));
-  const table = (title, list) => (
-    <div className="card table-card">
-      <div className="card-head"><h3>{title}</h3></div>
-      <div className="table-wrap"><table className="table">
-        <thead><tr><th>Agent</th><th>Now</th><th>Last run</th></tr></thead>
-        <tbody>{list.map(a => <AgentRow key={a.id} a={a} busy={busy(a.id)} last={last(a.id)} />)}</tbody>
-      </table></div>
-    </div>
-  );
+  const grid = list => <div className="crew-grid">{list.map(a => <AgentCard key={a.id} a={a} busy={busy(a.id)} last={last(a.id)} />)}</div>;
   return (
     <div className="stack">
       {mode && <ModeLine mode={mode} />}
-      {!agents ? <SkBlock h={320} /> : <>
-        {table("Your agents", lead)}
-        {table("Job search team · started by Find and prepare applications", team)}
+      {!agents ? <div className="crew-grid">{[0, 1, 2, 3].map(i => <div key={i} className="card sk-card" style={{ height: 190 }} />)}</div> : <>
+        <h3 className="sec-title">Your crew</h3>
+        {grid(lead)}
+        <h3 className="sec-title">Maya's job search team <span className="crew-sub">she sends them out when you look for jobs</span></h3>
+        {grid(team)}
       </>}
     </div>
   );
@@ -79,20 +55,22 @@ function ModeLine({ mode }) {
   return <p className="ag-mode">{text} <a href="/app/approvals" onClick={e => { e.preventDefault(); go("approvals"); }}>Change</a></p>;
 }
 
-function AgentRow({ a, busy, last }) {
-  const open = () => go(`my-agents/${a.id}`);
+function AgentCard({ a, busy, last }) {
   const now = busy[0];
+  const open = e => { e.preventDefault(); go(`my-agents/${a.id}`); };
   return (
-    <tr className="click" onClick={open}>
-      <td>
-        <a href={`/app/my-agents/${a.id}`} onClick={e => { e.preventDefault(); open(); }} className="ag-name">{name(a.id)}</a>
-        <div className="ag-about">{about(a.id) || a.description}</div>
-      </td>
-      <td className="ag-now">{now ? <Badge tone={TONE[now.status]}>{STATUS[now.status] || now.status.replace(/_/g, " ")}</Badge>
-        : <span className="ag-muted">Idle</span>}</td>
-      <td className="ag-last">{last ? <>{ago(last.created_at)} <span className="ag-muted">· {STATUS[last.status] || last.status.replace(/_/g, " ")}</span></>
-        : <span className="ag-muted">Never</span>}</td>
-    </tr>
+    <a href={`/app/my-agents/${a.id}`} onClick={open} className={`card crew-card ${now ? "working" : ""}`} style={{ "--rb": agentColor(a.id) }}>
+      <div className="crew-top">
+        <span className="crew-av"><Robot id={a.id} size={64} working={!!now} />{now && <i className="crew-live" />}</span>
+        <div className="crew-who"><b>{agentName(a.id)}</b><span>{agentRole(a.id)}</span></div>
+      </div>
+      <p className="crew-about">{about(a.id) || a.description}</p>
+      <div className="crew-foot">
+        {now ? <span className="crew-now">Working · {STATUS[now.status] || now.status.replace(/_/g, " ")}</span>
+          : last ? <span>Last worked {ago(last.created_at)} · {STATUS[last.status] || last.status.replace(/_/g, " ")}</span>
+            : <span>Hasn't worked yet</span>}
+      </div>
+    </a>
   );
 }
 
@@ -107,8 +85,10 @@ function AgentPage({ id }) {
   return (
     <div className="stack">
       <a href="/app/my-agents" className="small-label" onClick={e => { e.preventDefault(); go("my-agents"); }}>← All agents</a>
-      <div className="ag-head">
-        <h2>{name(id)}</h2>
+      <div className="ag-head" style={{ "--rb": agentColor(id) }}>
+        <Robot id={id} size={92} working={!!cur} />
+        <div style={{ minWidth: 0 }}>
+        <h2>{agentName(id)} <span className="crew-role">{agentRole(id)}</span></h2>
         <p>{about(id) || d?.agent.description}</p>
         {d && <div className="ag-meta">
           Version {d.agent.version} · {d.mode === "on" ? "On" : d.mode === "off" ? "Off" : "Shadow (looks, changes nothing)"}
@@ -116,6 +96,7 @@ function AgentPage({ id }) {
           {d.pending_approvals > 0 && <> · <a href="/app/approvals" onClick={e => { e.preventDefault(); go("approvals"); }}>
             {d.pending_approvals} waiting for your approval</a></>}
         </div>}
+        </div>
       </div>
       {!d ? <SkBlock h={200} /> : <>
         <div className="kpis four">
@@ -180,8 +161,8 @@ function FindJobs({ onStarted, disabled }) {
   };
   return (
     <div className="card card-pad">
-      <b>{NAMES.orchestrator}</b>
-      <div className="small-label" style={{ marginTop: 4 }}>The Orchestrator plans it: the Job Scout searches, the Job Analyst ranks and checks your rules, the Researcher looks up companies, the Writer drafts, the Applicant applies after you approve each one.</div>
+      <b>Give Maya a job search</b>
+      <div className="small-label" style={{ marginTop: 4 }}>Maya plans it: Arjun searches, Priya ranks, Kabir looks up companies, Ira drafts, and Dev applies after you approve each one.</div>
       <div className="stack-sm">
         <Field label="Goal (optional)"><input className="input" value={f.goal} placeholder="e.g. 5 remote backend roles at product companies" onChange={set("goal")} /></Field>
         <div className="row-3">
@@ -227,7 +208,7 @@ function RunDetail({ id, onClose }) {
   const cancel = async () => { try { await api(`/api/agents/tasks/${id}/cancel`, { json: {} }); toast("Stopping at its next step"); onClose(); } catch (e) { fail(e); } };
   const t = d?.task, rep = t?.result?.report;
   return <>
-    <DrawerHead title={t ? name(t.agent_id) : "Agent run"} onClose={onClose} />
+    <DrawerHead title={t ? agentLabel(t.agent_id) : "Agent run"} onClose={onClose} />
     {!t ? <Sk w="60%" /> : <div className="stack" style={{ padding: 16 }}>
       <div className="row-xs" style={{ justifyContent: "space-between" }}>
         <Badge tone={TONE[t.status]}>{STATUS[t.status] || t.status.replace(/_/g, " ")}</Badge>
