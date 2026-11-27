@@ -89,7 +89,7 @@ export default function App() {
     <MotionConfig reducedMotion="user">
       <Shell page={page} title={title} sub={sub}>
         <AnimatePresence mode="wait">
-          <motion.div key={page + (page === "contact" ? route.param : "")} className="page"
+          <motion.div key={page + (page === "contact" || page === "my-agents" ? route.param : "")} className="page"
             initial={{ opacity: 0, y: 14, filter: "blur(4px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
             exit={{ opacity: 0, y: -8, filter: "blur(2px)", transition: { duration: .14 } }} transition={{ duration: .32, ease }}>
             <Suspense fallback={<PageSkeleton />}>
