@@ -15,7 +15,7 @@ export const NAV = [
   { key: "main", group: null, items: [["dashboard", "Dashboard", "home"], ["activity", "Activity", "activity"]] },
   { key: "outreach", group: "Outreach", icon: "send", items: [["contacts", "Contacts", "users", "contacts"], ["finder", "Email finder", "search"], ["replies", "Replies", "reply", "replies"],
     ["templates", "Templates", "message"], ["files", "Files", "file"], ["inbox", "Inbox insights", "inbox"]] },
-  { key: "career", group: "Career", icon: "briefcase", items: [["ai-jobs", "AI job match", "sparkles", null, "ai"], ["approvals", "Approvals", "shield", "approvals"], ["nearby", "Companies near me", "globe"], ["learning", "Learning", "book"], ["applications", "Applications", "briefcase", "apps"], ["jobs", "Job matches", "zap", "jobs"], ["posts", "Hiring posts", "message", "queue"]] },
+  { key: "career", group: "Career", icon: "briefcase", items: [["ai-jobs", "AI job match", "sparkles", null, "ai"], ["my-agents", "My agents", "sparkles", null, "ai"], ["approvals", "Approvals", "shield", "approvals"], ["nearby", "Companies near me", "globe"], ["learning", "Learning", "book"], ["applications", "Applications", "briefcase", "apps"], ["jobs", "Job matches", "zap", "jobs"], ["posts", "Hiring posts", "message", "queue"]] },
   { key: "website", group: "My website", icon: "globe", items: [["portfolio", "Website & portfolio", "star"], ["leads", "Leads", "inbox", "leads"]] },
   { key: "admin", group: "Super Admin", icon: "shield", admin: true, items: [["agents", "Agent control", "shield"]] },
 ];
