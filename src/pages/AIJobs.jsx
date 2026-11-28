@@ -11,6 +11,8 @@ import { FollowupsDrawer } from "./ai-jobs/FollowupsDrawer";
 import { KitDrawer } from "./ai-jobs/KitDrawer";
 import { LiveView } from "./ai-jobs/LiveView";
 import { ApplyProgress } from "./ai-jobs/ApplyProgress";
+import { Robot } from "./agents/crew";
+import { researchCompany } from "../ui/research";
 import { EvalProgress } from "./ai-jobs/EvalProgress";
 import { MatchProgress } from "./ai-jobs/MatchProgress";
 import { ReportDrawer, TIER_LABEL, scoreTone } from "./ai-jobs/ReportDrawer";
@@ -215,7 +217,10 @@ export default function AIJobs() {
                     {canPick(r) && <Check checked={picked.has(r.id)} onChange={() => toggle(r.id)}><span className="sr-only">Select</span></Check>}
                   </div>
                   {r.ai_verdict && <p className="ai-verdict"><Icon name="sparkles" />{r.ai_verdict}</p>}
-                  {(r.report || r.pay) && <div className="ai-badges">
+                  {(r.report || r.pay || d.researched?.includes(r.company?.toLowerCase())) && <div className="ai-badges">
+                    {d.researched?.includes(r.company?.toLowerCase()) && <button type="button" className="ai-kabir" title="See what Kabir found"
+                      onClick={e => { e.stopPropagation(); researchCompany({ name: r.company }); }}>
+                      <Robot id="researcher" size={18} /> Kabir researched it</button>}
                     {r.report && <Badge tone={TIER[r.report.tier]}>{TIER_LABEL[r.report.tier]}</Badge>}
                     {r.pay && <Badge dot={false}>{r.pay}</Badge>}
                     {r.remote && r.remote !== "Not stated" && <Badge dot={false}>{r.remote}</Badge>}

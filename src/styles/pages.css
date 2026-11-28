@@ -912,6 +912,9 @@ a.kpi:hover { border-color: var(--border-strong); box-shadow: var(--shadow-md); 
 .ai-source.on .ai-tick { background: var(--ai-grad); border-color: transparent; color: #fff; }
 .ai-actions { display: flex; align-items: center; gap: 12px; margin-top: 18px; flex-wrap: wrap; }
 .ai-actions .btn-primary, .ai-results .toolbar .btn-primary { background: var(--ai-grad); border-color: transparent; }
+.ai-kabir { display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px 2px 3px; border-radius: 99px; border: 0; cursor: pointer;
+  font: inherit; font-size: 11.5px; font-weight: 600; color: var(--text-2); background: color-mix(in srgb, #b0702a 13%, var(--surface)); }
+.ai-kabir:hover { background: color-mix(in srgb, #b0702a 22%, var(--surface)); }
 /* live match progress: a scene per stage */
 .mp { display: grid; grid-template-columns: 240px 1fr; gap: 24px; padding: 18px 22px; align-items: center; overflow: hidden; }
 .mp-stage { position: relative; height: 150px; border-radius: 16px; overflow: hidden;
