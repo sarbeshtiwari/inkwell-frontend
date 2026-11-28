@@ -39,7 +39,7 @@ export function ResearchHost() {
           <div className="rs-top"><Badge tone={tone}>{label}</Badge><span className="grow" />
             {row?.status === "researching" ? <Button size="sm" busy busyLabel="Researching" /> :
               <Button size="sm" variant={row ? "ghost" : "primary"} icon={row ? "refresh" : "search"} onClick={() => start(row?.status === "failed")}>{row ? "Research again" : "Research this company"}</Button>}</div>
-          {!row && <Empty icon="search" title="Not researched yet">Inkwell looks up the company's website, careers page, public hiring email and phone, CEO, CTO, size, industry and location. With Claude Code on your Mac it searches the web; otherwise it reads the company's own site. Each fact is kept only if its source page really shows it.</Empty>}
+          {!row && <Empty icon="search" title="Not researched yet">Inkwell looks up the company's website, careers page, public hiring email and phone, CEO, CTO, size, industry and location. It reads the company's own website. Each fact is kept only if its source page really shows it.</Empty>}
           {row?.status === "researching" && <p className="help">This takes a minute or two. You can close this and come back.</p>}
           {row?.error && <Alert tone="bad">{row.error}</Alert>}
           {typeof data.identity === "string" && <Alert tone="warn">{data.identity}</Alert>}

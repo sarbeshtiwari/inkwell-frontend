@@ -1,11 +1,12 @@
 import { AnimatePresence, MotionConfig, motion } from "framer-motion";
-import { Suspense, lazy, useEffect } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 import Shell from "./layout/Shell";
 import SendView from "./layout/SendView";
 import { useRoute } from "./lib/router";
 import { useApp } from "./lib/store";
 import { Button, Empty, ModalHost, SkBlock, Toasts, ease } from "./ui/kit";
 import { ResearchHost } from "./ui/research";
+import { Robot } from "./pages/agents/crew";
 
 const P = {
   dashboard: lazy(() => import("./pages/Dashboard")),
@@ -113,12 +114,35 @@ const PageSkeleton = () => (
   </div>
 );
 
+const BOOT_CREW = ["orchestrator", "job_scout", "job_analyst", "writer", "communicator", "email_finder"];
+const BOOT_LINES = ["Opening your workspace", "Waking up your agents", "Checking your inbox", "Almost there"];
+
 function Boot() {
+  const [line, setLine] = useState(0);
+  useEffect(() => { const t = setInterval(() => setLine(n => Math.min(n + 1, BOOT_LINES.length - 1)), 900); return () => clearInterval(t); }, []);
   return (
     <div className="boot">
-      <motion.div className="boot-logo" initial={{ scale: .6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", stiffness: 300, damping: 18 }}>
-        <svg viewBox="0 0 24 24" className="i"><rect x="3" y="7" width="13" height="10" rx="1.6" /><path d="m3.4 7.6 6.1 4.6 6.1-4.6" /><path d="m21 4-6.5 9.5" /><path d="m14.5 13.5-.6 2.4 2.2-1.1" /></svg>
-      </motion.div>
+      <div className="boot-stage">
+        {BOOT_CREW.map((id, i) => (
+          <motion.span key={id} className={`boot-bot b${i}`} initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: .35 + i * .12, type: "spring", stiffness: 320, damping: 16 }}>
+            <Robot id={id} size={40} working />
+          </motion.span>
+        ))}
+        <motion.div className="boot-logo" initial={{ scale: .6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", stiffness: 300, damping: 18 }}>
+          <svg viewBox="0 0 24 24" className="i boot-draw">
+            <rect x="3" y="7" width="13" height="10" rx="1.6" pathLength="1" /><path d="m3.4 7.6 6.1 4.6 6.1-4.6" pathLength="1" />
+            <path className="pen" d="m21 4-6.5 9.5" pathLength="1" /><path className="pen" d="m14.5 13.5-.6 2.4 2.2-1.1" pathLength="1" />
+          </svg>
+        </motion.div>
+      </div>
+      <motion.b className="boot-name" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .25 }}>Inkwell</motion.b>
+      <div className="boot-line">
+        <AnimatePresence mode="wait">
+          <motion.span key={line} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: .2 }}>
+            {BOOT_LINES[line]}</motion.span>
+        </AnimatePresence>
+      </div>
       <motion.div className="boot-bar" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: .2 }}><span /></motion.div>
     </div>
   );

@@ -10,10 +10,14 @@ import { ExtensionDrawer } from "./ai-jobs/ExtensionDrawer";
 import { FollowupsDrawer } from "./ai-jobs/FollowupsDrawer";
 import { KitDrawer } from "./ai-jobs/KitDrawer";
 import { LiveView } from "./ai-jobs/LiveView";
+import { ApplyProgress } from "./ai-jobs/ApplyProgress";
+import { Robot } from "./agents/crew";
+import { researchCompany } from "../ui/research";
+import { EvalProgress } from "./ai-jobs/EvalProgress";
+import { MatchProgress } from "./ai-jobs/MatchProgress";
 import { ReportDrawer, TIER_LABEL, scoreTone } from "./ai-jobs/ReportDrawer";
 import { SOURCES, tone } from "./ai-jobs/shared";
 
-const STEPS = ["Reading your resume", "Searching", "Ranking matches", "Done"];
 
 const TIER = { "High Confidence": "ok", "Proceed with Caution": "warn", Suspicious: "bad", Closed: "bad" };
 
@@ -110,7 +114,6 @@ export default function AIJobs() {
     catch (x) { x.field === "consent" ? setApplyOpen(true) : fail(x); }
     setBusy("");
   };
-  const stage = STEPS.indexOf(d?.stage);
   return (
     <div className="ai-page">
       <div className="ai-hero card">
@@ -162,24 +165,13 @@ export default function AIJobs() {
 
       <AnimatePresence>
         {running && (
-          <motion.div className="card card-pad ai-steps" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-            {STEPS.slice(0, 3).map((s, i) => (
-              <div key={s} className={`ai-step ${i < stage ? "done" : i === stage ? "now" : ""}`}>
-                <span className="ai-step-dot">{i < stage ? <Icon name="check" /> : i + 1}</span>{s}
-              </div>
-            ))}
-            {d.skills?.length > 0 && <p className="help">Skills found in your resume: {d.skills.slice(0, 12).join(", ")}</p>}
-          </motion.div>
+          <MatchProgress key="progress" stage={d.stage} skills={d.skills} started={d.started} />
         )}
       </AnimatePresence>
 
-      {d?.evaluating?.state === "running" && (
-        <Alert tone="info" icon="sparkles">Evaluating… {d.evaluating.done} of {d.evaluating.total}{d.evaluating.current ? `: ${d.evaluating.current}` : ""}</Alert>
-      )}
+      <AnimatePresence>{d?.evaluating?.state === "running" && <EvalProgress key="eval" ev={d.evaluating} />}</AnimatePresence>
 
-      {d?.applying?.state === "running" && (
-        <Alert tone="info" icon="sparkles">Applying… {d.applying.done} of {d.applying.total}{d.applying.current ? `: ${d.applying.current}` : ""}</Alert>
-      )}
+      <AnimatePresence>{d?.applying?.state === "running" && <ApplyProgress key="apply" ap={d.applying} />}</AnimatePresence>
 
       <LiveView active={d?.applying?.state === "running" || !!d?.handover} />
 
@@ -225,7 +217,10 @@ export default function AIJobs() {
                     {canPick(r) && <Check checked={picked.has(r.id)} onChange={() => toggle(r.id)}><span className="sr-only">Select</span></Check>}
                   </div>
                   {r.ai_verdict && <p className="ai-verdict"><Icon name="sparkles" />{r.ai_verdict}</p>}
-                  {(r.report || r.pay) && <div className="ai-badges">
+                  {(r.report || r.pay || d.researched?.includes(r.company?.toLowerCase())) && <div className="ai-badges">
+                    {d.researched?.includes(r.company?.toLowerCase()) && <button type="button" className="ai-kabir" title="See what Kabir found"
+                      onClick={e => { e.stopPropagation(); researchCompany({ name: r.company }); }}>
+                      <Robot id="researcher" size={18} /> Kabir researched it</button>}
                     {r.report && <Badge tone={TIER[r.report.tier]}>{TIER_LABEL[r.report.tier]}</Badge>}
                     {r.pay && <Badge dot={false}>{r.pay}</Badge>}
                     {r.remote && r.remote !== "Not stated" && <Badge dot={false}>{r.remote}</Badge>}
