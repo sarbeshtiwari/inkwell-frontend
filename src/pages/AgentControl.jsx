@@ -117,16 +117,24 @@ function Model() {
     try { await api("/api/admin/model", { method: "PUT", json: clear ? { provider: null, reason } : { ...f, reason } }); toast("Saved"); load(); } catch (e) { fail(e); }
   };
   return (
-    <Card title="Agents' model" sub="One model for every agent, paid with the platform key set on the server. Without one, agents use each user's own model settings.">
+    <Card title="Agents' model" sub="One model for every agent and feature: a platform key set on the server, or Claude Code on this computer under your own plan. Without one, no AI is used.">
       {!d ? <Sk w="50%" /> : <>
-        <div className="small-label">Now: {d.config ? `${d.config.model} (${d.config.provider}), version ${d.config.version}` : "each user's own model"}</div>
+        <div className="small-label">Now: {d.config ? `${d.config.model} (${d.config.provider === "claude_cli" ? "Claude Code on this computer" : d.config.provider}), version ${d.config.version}${d.config.key_configured ? "" : " · not available right now"}` : "no model: agents use their own rules"}</div>
         <div className="row-2">
-          <Field label="Provider"><select className="select" value={f.provider} onChange={e => setF({ ...f, provider: e.target.value })}>
+          <Field label="Provider"><select className="select" value={f.provider} onChange={e => {
+            const p = d.providers.find(x => x.id === e.target.value);
+            setF({ provider: e.target.value, model: p?.models ? p.models[0] : "" });
+          }}>
             {d.providers.map(p => <option key={p.id} value={p.id} disabled={!p.key_configured}>{p.label}{p.key_configured ? "" : " (no key on the server)"}</option>)}</select></Field>
-          <Field label="Model"><input className="input" value={f.model} placeholder="e.g. claude-sonnet-5-5" onChange={e => setF({ ...f, model: e.target.value })} /></Field>
+          {(() => { const p = d.providers.find(x => x.id === f.provider); return p?.models
+            ? <Field label="Model"><select className="select" value={f.model} onChange={e => setF({ ...f, model: e.target.value })}>
+                {p.models.map(m => <option key={m} value={m}>{m[0].toUpperCase() + m.slice(1)}</option>)}</select></Field>
+            : <Field label="Model"><input className="input" value={f.model} placeholder="e.g. claude-sonnet-5-5" onChange={e => setF({ ...f, model: e.target.value })} /></Field>; })()}
         </div>
+        {f.provider === "claude_cli" && <p className="help">Runs <code>claude -p</code> on this Mac with the account you're signed in to in the terminal.
+          Calls share your Claude plan's limits with your own Claude Code sessions. Not available on the hosted site.</p>}
         <div className="row-xs" style={{ justifyContent: "flex-end" }}>
-          {d.config && <Button variant="ghost" onClick={() => save(true)}>Use users' own models</Button>}
+          {d.config && <Button variant="ghost" onClick={() => save(true)}>Turn the model off</Button>}
           <Button variant="primary" disabled={!f.model} onClick={() => save(false)}>Save</Button>
         </div>
       </>}
